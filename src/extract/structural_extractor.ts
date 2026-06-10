@@ -7,7 +7,7 @@ import {
 } from 'ts-morph';
 import { GraphEdge } from '../schema/edge.js';
 import { GraphNode, NodeKind } from '../schema/node.js';
-import { NodeId } from './node-id.js';
+import { NodeId } from './node_id.js';
 
 export type Extraction = {
 	nodes: GraphNode[];

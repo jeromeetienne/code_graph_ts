@@ -92,10 +92,10 @@ symbols; add `--json` to get their ids:
 
 ```bash
 npm run dev -- find KuzuStore
-#   Class          KuzuStore  src/store/kuzu-store.ts:11
+#   Class          KuzuStore  src/store/kuzu_store.ts:11
 
 npm run dev -- find KuzuStore --json
-#   [{ "id": "ClassDeclaration:src/store/kuzu-store.ts#KuzuStore@11", ... }]
+#   [{ "id": "ClassDeclaration:src/store/kuzu_store.ts#KuzuStore@11", ... }]
 ```
 
 Then feed an id into the traversal commands (your line numbers will differ —
@@ -103,16 +103,16 @@ ids encode the declaration line, so always copy them from `find --json`):
 
 ```bash
 # who calls this method, directly?
-npm run dev -- who-calls 'MethodDeclaration:src/store/kuzu-store.ts#run@49'
+npm run dev -- who-calls 'MethodDeclaration:src/store/kuzu_store.ts#run@49'
 
 # everything transitively impacted if I change it (the blast radius)
-npm run dev -- blast-radius 'MethodDeclaration:src/store/kuzu-store.ts#run@49' --depth 10
+npm run dev -- blast-radius 'MethodDeclaration:src/store/kuzu_store.ts#run@49' --depth 10
 
 # every reference to a symbol or type: calls, type usage, heritage, new, value reads
 npm run dev -- references 'TypeAliasDeclaration:src/schema/node.ts#GraphNode@37'
 
 # one-hop neighbourhood, both directions
-npm run dev -- neighbors 'ClassDeclaration:src/store/kuzu-store.ts#KuzuStore@11'
+npm run dev -- neighbors 'ClassDeclaration:src/store/kuzu_store.ts#KuzuStore@11'
 
 # exported symbols nothing references — dead-code candidates
 npm run dev -- dead-exports
@@ -198,7 +198,7 @@ don't.
 ## Where to go next
 
 - [README](../README.md) — graph model, architecture, roadmap
-- `src/query/graph-query.ts` — add your own traversal (each method maps 1:1 to
+- `src/query/graph_query.ts` — add your own traversal (each method maps 1:1 to
   an agent tool)
-- `src/agent/optimizer-agent.ts` — the system prompt and the
+- `src/agent/optimizer_agent.ts` — the system prompt and the
   propose → verify → keep/revert loop

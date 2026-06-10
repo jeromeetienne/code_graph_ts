@@ -1,5 +1,5 @@
 import { Command } from 'commander';
-import { CommandHelpers } from './command-helpers.js';
+import { CommandHelpers } from './command_helpers.js';
 
 export class Find {
 	static register(program: Command): void {

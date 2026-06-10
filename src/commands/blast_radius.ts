@@ -1,5 +1,5 @@
 import { Command } from 'commander';
-import { CommandHelpers, DEFAULT_DB_PATH, QueryOptions } from './command-helpers.js';
+import { CommandHelpers, DEFAULT_DB_PATH, QueryOptions } from './command_helpers.js';
 
 type BlastOptions = QueryOptions & {
 	depth: string;

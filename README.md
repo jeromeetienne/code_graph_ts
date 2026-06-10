@@ -109,22 +109,22 @@ find/replace with in-memory backups; run on a clean git tree so you can review
 src/
   schema/        Zod schemas for nodes and edges (the wire format)
   extract/
-    project-loader.ts        load a ts-morph Project from tsconfig
-    node-id.ts               deterministic, position-stable node ids
-    structural-extractor.ts  modules, declarations, imports, containment
-    semantic-extractor.ts    heritage, CALLS, INSTANTIATES, type edges
-    graph-builder.ts         orchestrates extraction, dedupes by id
+    project_loader.ts        load a ts-morph Project from tsconfig
+    node_id.ts               deterministic, position-stable node ids
+    structural_extractor.ts  modules, declarations, imports, containment
+    semantic_extractor.ts    heritage, CALLS, INSTANTIATES, type edges
+    graph_builder.ts         orchestrates extraction, dedupes by id
   store/
-    jsonl-store.ts           serialize the graph to JSONL
-    jsonl-reader.ts          read + Zod-validate the JSONL back in
-    kuzu-store.ts            load the graph into embedded Kùzu, run Cypher
+    jsonl_store.ts           serialize the graph to JSONL
+    jsonl_reader.ts          read + Zod-validate the JSONL back in
+    kuzu_store.ts            load the graph into embedded Kùzu, run Cypher
   query/
-    graph-query.ts           the agent's query tools (who-calls, blast-radius…)
+    graph_query.ts           the agent's query tools (who-calls, blast-radius…)
   agent/
-    agent-tools.ts           graph queries + read_file + propose_optimization, as LLM tools
-    code-editor.ts           unique-match find/replace with in-memory backup + revert
+    agent_tools.ts           graph queries + read_file + propose_optimization, as LLM tools
+    code_editor.ts           unique-match find/replace with in-memory backup + revert
     verifier.ts              runs `tsc --noEmit`, returns pass/fail + output
-    optimizer-agent.ts       the LLM tool-calling loop (propose → verify → keep/revert)
+    optimizer_agent.ts       the LLM tool-calling loop (propose → verify → keep/revert)
   cli.ts                     extract / load / query / optimize commands
 ```
 

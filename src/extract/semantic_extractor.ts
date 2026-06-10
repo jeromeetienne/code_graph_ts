@@ -10,8 +10,8 @@ import {
 	TypeNode,
 } from 'ts-morph';
 import { GraphEdge } from '../schema/edge.js';
-import { NodeId } from './node-id.js';
-import { Extraction } from './structural-extractor.js';
+import { NodeId } from './node_id.js';
+import { Extraction } from './structural_extractor.js';
 
 type Signatured = FunctionDeclaration | MethodDeclaration | MethodSignature;
 

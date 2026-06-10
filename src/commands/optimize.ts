@@ -1,10 +1,10 @@
 import { existsSync } from 'node:fs';
 import chalk from 'chalk';
 import { Command } from 'commander';
-import { AgentTools } from '../agent/agent-tools.js';
-import { CodeEditor } from '../agent/code-editor.js';
-import { OptimizerAgent } from '../agent/optimizer-agent.js';
-import { CommandHelpers, DEFAULT_DB_PATH } from './command-helpers.js';
+import { AgentTools } from '../agent/agent_tools.js';
+import { CodeEditor } from '../agent/code_editor.js';
+import { OptimizerAgent } from '../agent/optimizer_agent.js';
+import { CommandHelpers, DEFAULT_DB_PATH } from './command_helpers.js';
 
 const DEFAULT_TASK = 'Find one genuinely dead exported symbol using dead_exports, confirm with references that it has zero inbound references, then remove it safely.';
 

@@ -1,12 +1,12 @@
 import { resolve } from 'node:path';
 import chalk from 'chalk';
 import { Command } from 'commander';
-import { GraphBuilder } from '../extract/graph-builder.js';
-import { ProjectLoader } from '../extract/project-loader.js';
+import { GraphBuilder } from '../extract/graph_builder.js';
+import { ProjectLoader } from '../extract/project_loader.js';
 import { GraphEdge } from '../schema/edge.js';
 import { GraphNode } from '../schema/node.js';
-import { JsonlStore } from '../store/jsonl-store.js';
-import { DEFAULT_GRAPH_DIR } from './command-helpers.js';
+import { JsonlStore } from '../store/jsonl_store.js';
+import { DEFAULT_GRAPH_DIR } from './command_helpers.js';
 
 type ExtractOptions = {
 	out: string;

@@ -1,9 +1,9 @@
 import { resolve } from 'node:path';
 import chalk from 'chalk';
 import { Command } from 'commander';
-import { JsonlReader } from '../store/jsonl-reader.js';
-import { KuzuStore } from '../store/kuzu-store.js';
-import { DEFAULT_DB_PATH, DEFAULT_GRAPH_DIR } from './command-helpers.js';
+import { JsonlReader } from '../store/jsonl_reader.js';
+import { KuzuStore } from '../store/kuzu_store.js';
+import { DEFAULT_DB_PATH, DEFAULT_GRAPH_DIR } from './command_helpers.js';
 
 export class Load {
 	static register(program: Command): void {

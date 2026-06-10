@@ -1,8 +1,8 @@
 import { resolve } from 'node:path';
 import chalk from 'chalk';
 import { Command } from 'commander';
-import { GraphQuery, NeighborRef, SymbolRef } from '../query/graph-query.js';
-import { KuzuStore } from '../store/kuzu-store.js';
+import { GraphQuery, NeighborRef, SymbolRef } from '../query/graph_query.js';
+import { KuzuStore } from '../store/kuzu_store.js';
 
 export const DEFAULT_DB_PATH = './outputs/graph.kuzu';
 export const DEFAULT_GRAPH_DIR = './outputs/graph';
