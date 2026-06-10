@@ -1,8 +1,8 @@
 import { Project } from 'ts-morph';
-import { GraphEdge } from '../schema/edge';
-import { GraphNode } from '../schema/node';
-import { SemanticExtractor } from './semantic-extractor';
-import { Extraction, StructuralExtractor } from './structural-extractor';
+import { GraphEdge } from '../schema/edge.js';
+import { GraphNode } from '../schema/node.js';
+import { SemanticExtractor } from './semantic-extractor.js';
+import { Extraction, StructuralExtractor } from './structural-extractor.js';
 
 export type BuildOptions = {
 	semantic: boolean;

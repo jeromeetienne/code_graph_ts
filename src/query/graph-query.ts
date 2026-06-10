@@ -1,5 +1,5 @@
 import type { KuzuValue } from 'kuzu';
-import { KuzuStore } from '../store/kuzu-store';
+import { KuzuStore } from '../store/kuzu-store.js';
 
 export type SymbolRef = {
 	id: string;

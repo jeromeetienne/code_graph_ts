@@ -1,13 +1,28 @@
 {
-	"name": "open_ts_optim_ai",
+	"name": "ts-knowledge-graph",
 	"version": "0.1.0",
 	"description": "Parse TypeScript source into a knowledge graph for autonomous code optimization",
 	"type": "module",
-	"private": true,
+	"bin": {
+		"ts-knowledge-graph": "dist/cli.js"
+	},
+	"files": [
+		"dist",
+		"README.md",
+		"LICENSE",
+		".env-sample"
+	],
+	"engines": {
+		"node": ">=18"
+	},
+	"publishConfig": {
+		"access": "public"
+	},
 	"scripts": {
 		"extract": "tsx src/cli.ts extract",
 		"dev": "tsx src/cli.ts",
 		"build": "tsc -p tsconfig.build.json",
+		"publish:all": "npm run build && npm version patch && npm publish",
 		"typecheck": "tsc --noEmit"
 	},
 	"dependencies": {

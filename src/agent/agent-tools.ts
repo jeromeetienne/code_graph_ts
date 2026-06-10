@@ -1,7 +1,7 @@
 import { readFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
 import OpenAI from 'openai';
-import { GraphQuery } from '../query/graph-query';
+import { GraphQuery } from '../query/graph-query.js';
 
 export const PROPOSE_TOOL_NAME = 'propose_optimization';
 

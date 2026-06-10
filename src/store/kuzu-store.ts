@@ -2,8 +2,8 @@ import { mkdirSync } from 'node:fs';
 import { dirname } from 'node:path';
 import { Connection, Database, QueryResult } from 'kuzu';
 import type { KuzuValue } from 'kuzu';
-import { GraphEdge } from '../schema/edge';
-import { GraphNode } from '../schema/node';
+import { GraphEdge } from '../schema/edge.js';
+import { GraphNode } from '../schema/node.js';
 
 const SCHEMA = [
 	'CREATE NODE TABLE IF NOT EXISTS GraphNode (id STRING, kind STRING, name STRING, filePath STRING, exported BOOLEAN, startLine INT64, endLine INT64, PRIMARY KEY (id))',

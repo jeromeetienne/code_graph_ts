@@ -1,18 +1,19 @@
+#!/usr/bin/env node
 import { existsSync } from 'node:fs';
 import { resolve } from 'node:path';
 import chalk from 'chalk';
 import { Command } from 'commander';
-import { AgentTools } from './agent/agent-tools';
-import { CodeEditor } from './agent/code-editor';
-import { OptimizerAgent } from './agent/optimizer-agent';
-import { GraphBuilder } from './extract/graph-builder';
-import { ProjectLoader } from './extract/project-loader';
-import { GraphQuery, NeighborRef, SymbolRef } from './query/graph-query';
-import { GraphEdge } from './schema/edge';
-import { GraphNode } from './schema/node';
-import { JsonlReader } from './store/jsonl-reader';
-import { JsonlStore } from './store/jsonl-store';
-import { KuzuStore } from './store/kuzu-store';
+import { AgentTools } from './agent/agent-tools.js';
+import { CodeEditor } from './agent/code-editor.js';
+import { OptimizerAgent } from './agent/optimizer-agent.js';
+import { GraphBuilder } from './extract/graph-builder.js';
+import { ProjectLoader } from './extract/project-loader.js';
+import { GraphQuery, NeighborRef, SymbolRef } from './query/graph-query.js';
+import { GraphEdge } from './schema/edge.js';
+import { GraphNode } from './schema/node.js';
+import { JsonlReader } from './store/jsonl-reader.js';
+import { JsonlStore } from './store/jsonl-store.js';
+import { KuzuStore } from './store/kuzu-store.js';
 
 const DEFAULT_TASK = 'Find one genuinely dead exported symbol using dead_exports, confirm with references that it has zero inbound references, then remove it safely.';
 const DEFAULT_DB_PATH = './outputs/graph.kuzu';

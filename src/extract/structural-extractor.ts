@@ -5,9 +5,9 @@ import {
 	Node,
 	SourceFile,
 } from 'ts-morph';
-import { GraphEdge } from '../schema/edge';
-import { GraphNode, NodeKind } from '../schema/node';
-import { NodeId } from './node-id';
+import { GraphEdge } from '../schema/edge.js';
+import { GraphNode, NodeKind } from '../schema/node.js';
+import { NodeId } from './node-id.js';
 
 export type Extraction = {
 	nodes: GraphNode[];

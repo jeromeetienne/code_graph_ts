@@ -1,7 +1,7 @@
 import { mkdir, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
-import { GraphEdge } from '../schema/edge';
-import { GraphNode } from '../schema/node';
+import { GraphEdge } from '../schema/edge.js';
+import { GraphNode } from '../schema/node.js';
 
 export class JsonlStore {
 	static async write(outDir: string, nodes: GraphNode[], edges: GraphEdge[]): Promise<void> {

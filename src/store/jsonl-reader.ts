@@ -1,8 +1,8 @@
 import { readFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { z } from 'zod';
-import { GraphEdge, GraphEdgeSchema } from '../schema/edge';
-import { GraphNode, GraphNodeSchema } from '../schema/node';
+import { GraphEdge, GraphEdgeSchema } from '../schema/edge.js';
+import { GraphNode, GraphNodeSchema } from '../schema/node.js';
 
 export type GraphData = {
 	nodes: GraphNode[];

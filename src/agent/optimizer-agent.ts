@@ -1,7 +1,7 @@
 import OpenAI from 'openai';
-import { AGENT_TOOLS, AgentTools, PROPOSE_TOOL_NAME } from './agent-tools';
-import { CodeEditor } from './code-editor';
-import { Verifier } from './verifier';
+import { AGENT_TOOLS, AgentTools, PROPOSE_TOOL_NAME } from './agent-tools.js';
+import { CodeEditor } from './code-editor.js';
+import { Verifier } from './verifier.js';
 
 const SYSTEM_PROMPT = `You are an autonomous TypeScript optimization agent working on a real codebase.
 
