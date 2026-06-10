@@ -79,6 +79,17 @@ JSON out.
 > and `READS` (value-identifier) edges. On this repository it reports exactly the
 > two genuinely-unused type aliases — no false positives.
 
+### Web visualisation
+
+Serve the database as an interactive graph — pan/zoom, kind filters, symbol
+search, per-node edge listing (see
+[contribs/web_visualisation](contribs/web_visualisation)):
+
+```bash
+npm run web            # reads ./outputs/graph.kuzu, serves http://localhost:4173
+npm run web -- --db ./outputs/graph.kuzu --port 8080
+```
+
 ### The optimization agent
 
 The end goal: an agent that uses the graph to find and apply optimizations,

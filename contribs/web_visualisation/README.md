@@ -11,7 +11,7 @@ file).
 ## Commands
 
 ```bash
-npm run build    # embed ../../outputs/graph/*.jsonl into web/data.js
+npm run build    # embed ../../outputs/graph/*.jsonl into web/data/graph_data.js
 npm start        # serve web/ on http://localhost:4173 (optional)
 npm run open     # open web/index.html directly (file://, macOS)
 ```

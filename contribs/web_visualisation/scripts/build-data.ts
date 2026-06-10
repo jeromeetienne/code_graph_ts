@@ -16,7 +16,7 @@ const main = (): void => {
 	const nodes = readJsonl(join(graphDir, 'nodes.jsonl'));
 	const edges = readJsonl(join(graphDir, 'edges.jsonl'));
 
-	const outPath = join(here, '..', 'web', 'data.js');
+	const outPath = join(here, '..', 'web', 'data', 'graph_data.js');
 	writeFileSync(outPath, `window.GRAPH_DATA = ${JSON.stringify({ nodes, edges })};\n`);
 	console.log(`✓ ${nodes.length} nodes, ${edges.length} edges -> ${outPath}`);
 };

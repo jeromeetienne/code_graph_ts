@@ -62,7 +62,7 @@ function boot() {
 	});
 
 	if (window.GRAPH_DATA !== undefined) {
-		setData(window.GRAPH_DATA.nodes, window.GRAPH_DATA.edges, 'embedded data.js');
+		setData(window.GRAPH_DATA.nodes, window.GRAPH_DATA.edges, 'embedded graph_data.js');
 		return;
 	}
 	if (location.protocol.startsWith('http') === true) {
@@ -80,7 +80,7 @@ async function tryFetch() {
 		]);
 		setData(parseJsonl(nodesText), parseJsonl(edgesText), 'fetched ../../../outputs/graph/*.jsonl');
 	} catch {
-		el('status').textContent = 'no data — generate data.js or drop the JSONL files here';
+		el('status').textContent = 'no data — generate data/graph_data.js or drop the JSONL files here';
 	}
 }
 

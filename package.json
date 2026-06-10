@@ -8,6 +8,7 @@
 	},
 	"files": [
 		"dist",
+		"contribs/web_visualisation/web",
 		"README.md",
 		"LICENSE",
 		".env-sample"
@@ -20,6 +21,7 @@
 	},
 	"scripts": {
 		"extract": "tsx src/cli.ts extract",
+		"web": "tsx src/cli.ts web",
 		"dev": "tsx src/cli.ts",
 		"build": "tsc -p tsconfig.build.json",
 		"publish:all": "npm run build && npm version patch && npm publish",
