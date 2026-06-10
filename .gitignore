@@ -1,5 +1,4 @@
 node_modules/
-graph/
 .env
 *.kuzu
 *.kuzu.*

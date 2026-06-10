@@ -16,6 +16,7 @@ import { KuzuStore } from './store/kuzu-store';
 
 const DEFAULT_TASK = 'Find one genuinely dead exported symbol using dead_exports, confirm with references that it has zero inbound references, then remove it safely.';
 const DEFAULT_DB_PATH = './outputs/graph.kuzu';
+const DEFAULT_GRAPH_DIR = './outputs/graph';
 
 type ExtractOptions = {
 	out: string;
@@ -41,7 +42,7 @@ export class Cli {
 		program
 			.command('extract')
 			.argument('<root>', 'path to the TypeScript project to parse')
-			.option('-o, --out <dir>', 'output directory for the JSONL graph', './graph')
+			.option('-o, --out <dir>', 'output directory for the JSONL graph', DEFAULT_GRAPH_DIR)
 			.option('--semantic', 'resolve heritage and CALLS edges (slower)', false)
 			.action(async (root: string, options: ExtractOptions) => {
 				await Cli.extract(root, options);
@@ -50,7 +51,7 @@ export class Cli {
 		program
 			.command('load')
 			.description('load a JSONL graph into an embedded Kùzu database')
-			.argument('<graphDir>', 'directory holding nodes.jsonl and edges.jsonl')
+			.argument('[graphDir]', 'directory holding nodes.jsonl and edges.jsonl', DEFAULT_GRAPH_DIR)
 			.option('-d, --db <path>', 'Kùzu database path', DEFAULT_DB_PATH)
 			.action(async (graphDir: string, options: { db: string }) => {
 				await Cli.load(graphDir, options.db);

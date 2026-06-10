@@ -1,0 +1,11 @@
+{
+	"version": "0.0.1",
+	"configurations": [
+		{
+			"name": "web-visualisation",
+			"runtimeExecutable": "python3",
+			"runtimeArgs": ["-m", "http.server", "4173", "--directory", "contribs/web_visualisation/web"],
+			"port": 4173
+		}
+	]
+}

@@ -11,6 +11,11 @@
 		"noUnusedLocals": true,
 		"noUnusedParameters": true,
 		"noEmit": true,
+		"outDir": "./dist",
+		"rootDir": ".",
+		"declaration": true,
+		"declarationMap": true,
+		"sourceMap": true,
 		"types": ["node"]
 	},
 	"include": ["src/**/*.ts"]

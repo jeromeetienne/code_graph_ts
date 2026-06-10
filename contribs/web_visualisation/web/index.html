@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<title>open_ts_optim_ai — knowledge graph</title>
+	<link rel="stylesheet" href="style.css">
+</head>
+<body>
+	<aside id="sidebar">
+		<h1>Knowledge graph</h1>
+		<div id="status">no data loaded</div>
+
+		<input id="search" type="search" placeholder="Search symbol or file… (Enter)" autocomplete="off">
+		<div id="search-results"></div>
+
+		<section>
+			<h2>Node kinds</h2>
+			<div id="node-kinds" class="legend"></div>
+		</section>
+
+		<section>
+			<h2>Edge kinds</h2>
+			<div id="edge-kinds" class="legend"></div>
+		</section>
+
+		<section>
+			<h2>Options</h2>
+			<label class="row"><input id="hide-isolated" type="checkbox"> hide isolated nodes</label>
+			<div class="row">
+				<select id="layout-select">
+					<option value="cose">cose (force)</option>
+					<option value="concentric">concentric (by degree)</option>
+					<option value="breadthfirst">breadthfirst</option>
+					<option value="circle">circle</option>
+					<option value="grid">grid</option>
+				</select>
+				<button id="relayout">layout</button>
+			</div>
+		</section>
+
+		<section id="details" class="empty">
+			<h2>Selection</h2>
+			<div id="details-body">click a node</div>
+		</section>
+	</aside>
+
+	<main id="cy"></main>
+
+	<div id="dropzone" class="hidden-overlay">
+		<div>drop <code>nodes.jsonl</code> + <code>edges.jsonl</code> here</div>
+	</div>
+
+	<script src="data.js"></script>
+	<script src="https://unpkg.com/cytoscape@3/dist/cytoscape.min.js"></script>
+	<script src="app.js"></script>
+</body>
+</html>

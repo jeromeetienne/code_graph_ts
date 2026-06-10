@@ -9,7 +9,7 @@ The pipeline has three stages, each producing an artifact the next one consumes:
 
 ```
 TypeScript project ──extract──▶ JSONL graph ──load──▶ Kùzu database ──▶ queries / agent
-                                (./graph/)            (./outputs/graph.kuzu)
+                                (./outputs/graph/)            (./outputs/graph.kuzu)
 ```
 
 1. **extract** — parses a TypeScript project with `ts-morph` (the TS compiler
@@ -40,13 +40,13 @@ Point `extract` at any TypeScript project with a `tsconfig.json` to analyze
 something else.
 
 ```bash
-npm run extract -- . --out ./graph --semantic
+npm run extract -- . --semantic
 ```
 
 Expected output (counts will vary with the codebase):
 
 ```
-✓ 120 nodes, 398 edges -> /…/graph
+✓ 120 nodes, 398 edges -> /…/outputs/graph
 
 Nodes
   Method           59
@@ -67,14 +67,14 @@ containment). For everything in this guide, use `--semantic`.
 The result is two line-oriented JSON files you can inspect directly:
 
 ```bash
-head -n 3 graph/nodes.jsonl
-head -n 3 graph/edges.jsonl
+head -n 3 outputs/graph/nodes.jsonl
+head -n 3 outputs/graph/edges.jsonl
 ```
 
 ## 3. Load it into the query database
 
 ```bash
-npm run dev -- load ./graph
+npm run dev -- load
 ```
 
 This writes the embedded Kùzu database to `./outputs/graph.kuzu` — the default
@@ -83,7 +83,7 @@ path every other command reads from, so from here on you can drop `--db`.
 > **Re-running after code changes:** the loader merges by node id, so stale
 > nodes from a previous extraction are not removed. For a clean state, delete
 > the database and reload:
-> `rm -rf outputs/graph.kuzu && npm run extract -- . --out ./graph --semantic && npm run dev -- load ./graph`
+> `rm -rf outputs/graph.kuzu && npm run extract -- . --semantic && npm run dev -- load`
 
 ## 4. Query the graph
 

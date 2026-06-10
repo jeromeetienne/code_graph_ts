@@ -38,14 +38,15 @@ require symbol resolution and are emitted with `--semantic`.
 npm install
 
 # structural graph only (fast)
-npm run extract -- <path-to-project> --out ./graph
+npm run extract -- <path-to-project>
 
 # full graph with heritage + CALLS edges
-npm run extract -- <path-to-project> --out ./graph --semantic
+npm run extract -- <path-to-project> --semantic
 ```
 
-Output is two JSONL files — `graph/nodes.jsonl` and `graph/edges.jsonl` — one
-record per line, easy to inspect, diff, and load into any store.
+Output is two JSONL files — `outputs/graph/nodes.jsonl` and
+`outputs/graph/edges.jsonl` (override with `--out`) — one record per line, easy
+to inspect, diff, and load into any store.
 
 ### Querying the graph
 
@@ -53,7 +54,7 @@ Load the JSONL into an embedded [Kùzu](https://kuzudb.com) database, then run t
 query tools:
 
 ```bash
-npm run dev -- load ./graph --db ./outputs/graph.kuzu
+npm run dev -- load        # reads ./outputs/graph, writes ./outputs/graph.kuzu
 
 npm run dev -- find <name>                 # resolve a name to node ids
 npm run dev -- who-calls <id>              # direct callers of a symbol

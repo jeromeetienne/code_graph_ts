@@ -1,0 +1,12 @@
+{
+	"name": "web-visualisation",
+	"version": "0.1.0",
+	"description": "Static web viewer for the open_ts_optim_ai knowledge graph",
+	"type": "module",
+	"private": true,
+	"scripts": {
+		"build": "npx -y tsx scripts/build-data.ts",
+		"start": "npx -y serve -l 4173 web",
+		"open": "open web/index.html"
+	}
+}
