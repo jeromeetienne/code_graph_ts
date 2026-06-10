@@ -18,5 +18,5 @@
 		"sourceMap": true,
 		"types": ["node"]
 	},
-	"include": ["src/**/*.ts"]
+	"include": ["src/**/*.ts", "contribs/web_visualisation/**/*.ts"],
 }
