@@ -9,10 +9,9 @@
 	"files": [
 		"dist",
 		"contribs/web_visualisation/web",
-		"skills/ts-knowledge-graph/SKILL.md",
+		"dotclaude_folder/skills/code-graph-query/SKILL.md",
 		"README.md",
-		"LICENSE",
-		".env-sample"
+		"LICENSE"
 	],
 	"engines": {
 		"node": ">=18"
@@ -25,6 +24,7 @@
 		"web": "tsx src/cli.ts web",
 		"dev": "tsx src/cli.ts",
 		"build": "tsc -p tsconfig.build.json",
+		"symlink:dotclaude": "bash scripts/symlink_dotclaude.sh",
 		"publish:all": "npm run build && npm version patch && npm publish",
 		"typecheck": "tsc --noEmit",
 		"test": "node --import tsx --test \"test/**/*.test.ts\""
@@ -33,7 +33,6 @@
 		"chalk": "^5.3.0",
 		"commander": "^12.1.0",
 		"kuzu": "^0.11.3",
-		"openai": "^6.42.0",
 		"ts-morph": "^23.0.0",
 		"zod": "^3.23.8"
 	},

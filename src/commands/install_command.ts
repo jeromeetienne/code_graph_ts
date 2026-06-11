@@ -4,7 +4,8 @@ import chalk from 'chalk';
 import { Command } from 'commander';
 import { PROJECT_ROOT } from '../project_root.js';
 
-const SKILL_RELATIVE_PATH = 'skills/code-graph-query/SKILL.md';
+const SKILL_SOURCE_PATH = 'dotclaude_folder/skills/code-graph-query/SKILL.md';
+const SKILL_TARGET_PATH = 'skills/code-graph-query/SKILL.md';
 
 type InstallOptions = {
 	force: boolean;
@@ -28,7 +29,7 @@ export class InstallCommand {
 
 	private static async run(destFolder: string, options: InstallOptions): Promise<void> {
 		const source = InstallCommand.sourceSkillPath();
-		const target = resolve(destFolder, SKILL_RELATIVE_PATH);
+		const target = resolve(destFolder, SKILL_TARGET_PATH);
 
 		if (existsSync(target) === true && options.force === false) {
 			console.log(chalk.yellow(`✗ ${target} already exists — pass --force to overwrite`));
@@ -45,6 +46,6 @@ export class InstallCommand {
 	 * running via tsx from `src` or from the built `dist` output.
 	 */
 	private static sourceSkillPath(): string {
-		return resolve(PROJECT_ROOT, SKILL_RELATIVE_PATH);
+		return resolve(PROJECT_ROOT, SKILL_SOURCE_PATH);
 	}
 }

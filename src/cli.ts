@@ -8,7 +8,6 @@ import { FindCommand } from './commands/find_command.js';
 import { InstallCommand } from './commands/install_command.js';
 import { LoadCommand } from './commands/load_command.js';
 import { NeighborsCommand } from './commands/neighbors_command.js';
-import { OptimizeCommand } from './commands/optimize_command.js';
 import { ReferencesCommand } from './commands/references_command.js';
 import { WebCommand } from './commands/web_command.js';
 import { WhoCallsCommand } from './commands/who_calls_command.js';
@@ -29,7 +28,6 @@ export class Cli {
 		BlastRadiusCommand.register(program);
 		NeighborsCommand.register(program);
 		ReferencesCommand.register(program);
-		OptimizeCommand.register(program);
 		WebCommand.register(program);
 		InstallCommand.register(program);
 
