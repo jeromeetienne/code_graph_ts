@@ -1,0 +1,16 @@
+- how many customer dash menu server can accept
+- SQL Load
+  - estimation load
+  - potential bottlenecks
+- ts_knowledge_graph by claude
+  - detection of optimisation
+  - creation of gh issue describing it
+  - eric to actually do the cut/paste
+- audit maintenability
+  - usage fallow
+- audit security
+- mesure latence
+- intrumentisation of the target codebase is sufficient
+  - if not, create gh issue describing it
+- https://dash-suite.com/
+- https://www.vectron-systems.com/en/
