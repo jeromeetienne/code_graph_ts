@@ -18,7 +18,7 @@ is not. Trust it over `grep` for any question about code structure or impact.
 
 ## Optional focus
 
-$ARGUMENTS
+ $ARGUMENTS
 
 If the focus above is non-empty, treat it as the user's starting hint (a dimension,
 a subsystem, or a named symbol) and steer the interview toward it. If it is empty,
