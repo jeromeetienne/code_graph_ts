@@ -73,6 +73,10 @@ The query methods on `GraphQuery` (`whoCalls`, `blastRadius`, `deadExports`,
 `neighborhood`, …) are designed to map one-to-one onto agent tools: JSON in,
 JSON out.
 
+For a task-oriented walk-through of these commands — using them by hand to
+answer impact, dead-code, and dependency questions — see the
+[Static Analysis guide](docs/STATIC_ANALYSIS.md).
+
 > **`dead-exports` accuracy:** it is member-aware (a class/interface counts as
 > live when any contained member is referenced) and considers `CALLS`,
 > `EXTENDS`, `IMPLEMENTS`, `USES_TYPE`, `RETURNS`, `PARAM_TYPE`, `INSTANTIATES`,

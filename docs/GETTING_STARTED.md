@@ -197,6 +197,8 @@ don't.
 
 ## Where to go next
 
+- [Static Analysis guide](STATIC_ANALYSIS.md) — use the query commands by hand
+  to answer impact, dead-code, and dependency questions about a codebase
 - [README](../README.md) — graph model, architecture, roadmap
 - `src/query/graph_query.ts` — add your own traversal (each method maps 1:1 to
   an agent tool)

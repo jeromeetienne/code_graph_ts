@@ -70,5 +70,6 @@ TypeScript project ──extract──▶ JSONL graph ──load──▶ Kùzu 
 - **`--json`** is available on every query command and emits the exact
   machine-readable shape the optimization agent consumes.
 
-See also: [Getting Started](../GETTING_STARTED.md) and the
-[project README](../../README.md).
+See also: [Getting Started](../GETTING_STARTED.md), the
+[Static Analysis guide](../STATIC_ANALYSIS.md) (these commands organised by the
+analysis question they answer), and the [project README](../../README.md).
