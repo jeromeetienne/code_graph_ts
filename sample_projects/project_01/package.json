@@ -1,0 +1,17 @@
+{
+	"name": "text-kit",
+	"version": "1.0.0",
+	"private": true,
+	"type": "module",
+	"description": "Sample project 01 for ts-knowledge-graph: a string / collection utility library that exercises the structural layer and dead-export detection.",
+	"scripts": {
+		"dev": "tsx ./src/main.ts",
+		"test": "tsx --test tests/**/*.test.ts",
+		"typecheck": "tsc --noEmit"
+	},
+	"devDependencies": {
+		"@types/node": "^20.14.0",
+		"tsx": "^4.16.0",
+		"typescript": "^5.5.0"
+	}
+}
