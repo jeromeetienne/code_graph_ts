@@ -18,13 +18,13 @@ describe *how the system is wired*:
 | File | Exports | Role |
 | --- | --- | --- |
 | `src/app.ts` | `createApp`, `main` | builds the app; mounts the routes and one inline `GET /ping` |
-| `src/routes.ts` | `registerRoutes` | registers `GET`/`POST /users` and `GET /health` with named handlers |
+| `src/index.ts` | — | public barrel |
+| `src/routes/routes.ts` | `registerRoutes` | registers `GET`/`POST /users` and `GET /health` with named handlers |
 | `src/handlers/users.ts` | `listUsers`, `createUser` | route handlers; `listUsers` calls the GitHub client |
 | `src/handlers/health.ts` | `health` | readiness handler; reads the configured `PORT` |
 | `src/clients/github.ts` | `fetchRepos` | `fetch('https://api.github.com/users')` → an `ExternalAPI` |
-| `src/config.ts` | `PORT`, `GITHUB_TOKEN` | `process.env` reads → `ConfigFlag` nodes |
-| `src/types.ts` | `Request`, `Response`, `RouteHandler`, `Router` | minimal Express-style types |
-| `src/index.ts` | — | public barrel |
+| `src/config/config.ts` | `PORT`, `GITHUB_TOKEN` | `process.env` reads → `ConfigFlag` nodes |
+| `src/types/types.ts` | `Request`, `Response`, `RouteHandler`, `Router` | minimal Express-style types |
 
 It yields **4 `Endpoint` nodes** (`GET /users`, `POST /users`, `GET /health`, and
 the inline `GET /ping`), **3 `HANDLES` edges** (the inline `/ping` has no named

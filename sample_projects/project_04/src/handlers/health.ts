@@ -1,5 +1,5 @@
-import { PORT } from '../config.js';
-import type { Request, Response } from '../types.js';
+import { PORT } from '../config/config.js';
+import type { Request, Response } from '../types/types.js';
 
 /** `GET /health` — readiness probe reporting the configured port. */
 export function health(req: Request, res: Response): void {

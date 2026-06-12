@@ -1,4 +1,4 @@
-import { GITHUB_TOKEN } from '../config.js';
+import { GITHUB_TOKEN } from '../config/config.js';
 
 /** Fetches a user's public repositories from the GitHub REST API. */
 export async function fetchRepos(user: string): Promise<unknown> {

@@ -1,6 +1,6 @@
-import { PORT } from './config.js';
-import { registerRoutes } from './routes.js';
-import type { Request, Response, Router } from './types.js';
+import { PORT } from './config/config.js';
+import { registerRoutes } from './routes/routes.js';
+import type { Request, Response, Router } from './types/types.js';
 
 /** Wires the application routes onto a router, plus one inline route. */
 export function createApp(router: Router): Router {

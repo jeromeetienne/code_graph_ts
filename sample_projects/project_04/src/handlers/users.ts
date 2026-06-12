@@ -1,5 +1,5 @@
 import { fetchRepos } from '../clients/github.js';
-import type { Request, Response } from '../types.js';
+import type { Request, Response } from '../types/types.js';
 
 /** `GET /users` — list users together with their repositories. */
 export async function listUsers(req: Request, res: Response): Promise<void> {
