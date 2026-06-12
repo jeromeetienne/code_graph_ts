@@ -48,7 +48,7 @@ anything else falls back to `application/octet-stream`.
 ## Output
 
 ```
-loaded 120 nodes, 398 edges from /…/outputs/graph.kuzu
+loaded ~390 nodes, ~1.3k edges from /…/outputs/graph.kuzu
 ✓ serving the knowledge graph at http://localhost:4173/
   press Ctrl+C to stop
 ```

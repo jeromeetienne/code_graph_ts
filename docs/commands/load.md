@@ -45,8 +45,10 @@ queried with Cypher. The database lives entirely in the `--db` directory.
 
 ```
 Loading /…/outputs/graph into /…/outputs/graph.kuzu ...
-✓ loaded 120 nodes, 398 edges
+✓ loaded ~390 nodes, ~1.3k edges
 ```
+
+(Counts are illustrative and vary with the codebase and version.)
 
 ## Examples
 
