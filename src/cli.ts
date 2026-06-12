@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 import { Command } from 'commander';
+import { BenchmarkCommand } from './commands/benchmark_command.js';
 import { BlastRadiusCommand } from './commands/blast_radius_command.js';
 import { CallsCommand } from './commands/calls_command.js';
 import { CostCommand } from './commands/cost_command.js';
@@ -12,6 +13,7 @@ import { InstallCommand } from './commands/install_command.js';
 import { LoadCommand } from './commands/load_command.js';
 import { NeighborsCommand } from './commands/neighbors_command.js';
 import { ReferencesCommand } from './commands/references_command.js';
+import { VerifyCommand } from './commands/verify_command.js';
 import { WebCommand } from './commands/web_command.js';
 import { WhoCallsCommand } from './commands/who_calls_command.js';
 
@@ -31,6 +33,8 @@ export class Cli {
 		DeadExportsCommand.register(program);
 		HotspotsCommand.register(program);
 		CostCommand.register(program);
+		VerifyCommand.register(program);
+		BenchmarkCommand.register(program);
 		BlastRadiusCommand.register(program);
 		NeighborsCommand.register(program);
 		ReferencesCommand.register(program);

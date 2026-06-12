@@ -53,6 +53,13 @@ TypeScript project ──extract──▶ JSONL graph ──load──▶ Kùzu 
 | [`hotspots`](hotspots.md) | Rank nodes by optimization leverage — runtime self-time, fan-in, call-count, or blast radius. |
 | [`cost`](cost.md) | Propagate self cost into inclusive cost and rank nodes by share of total; or break one node's cost into callee/caller attribution. |
 
+### Verify & measure an edit
+
+| Command | Purpose |
+| --- | --- |
+| [`verify`](verify.md) | Run the project's `typecheck` + `test` scripts as one keep/revert gate for an edit; degrades to type-check-only, reported honestly, when there is no test script. |
+| [`benchmark`](benchmark.md) | Measure a target node's runtime metric (profile → enrich → cost) over N runs and report the median + spread, with an advisory baseline→after delta. |
+
 ### Use the graph
 
 | Command | Purpose |

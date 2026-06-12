@@ -5,6 +5,10 @@
 # Builds the graph from scratch, then demonstrates the system-level layer:
 # Endpoint / HANDLES (routes and their handlers), ConfigFlag / READS_CONFIG
 # (the process.env surface), and ExternalAPI / CALLS_EXTERNAL (outbound fetch).
+# It closes on verify, the optimize loop's correctness gate — here it shows
+# graceful degradation: project_04 has a type-check but no test script, so verify
+# runs type-check-only and reports behaviour as NOT verified. There is no
+# benchmark step: this is a system-level routing sample with no CPU hot path.
 #
 # Usage:  npm run project04:tour       (or)  bash scripts/project_04_tour.sh
 #
@@ -51,6 +55,9 @@ $CLI find ExternalAPI --db "$DB"
 
 section 'neighbors api.github.com — the call sites via CALLS_EXTERNAL (expect fetchRepos)'
 $CLI neighbors 'Api:api.github.com' --db "$DB"
+
+section 'verify — the optimize loop’s correctness gate; project_04 has no test script, so it degrades to type-check-only and says so'
+$CLI verify --cwd "$PROJECT"
 
 section 'done'
 printf 'Interactive: explore the same graph in the browser with\n  npm run project04:web\n'

@@ -134,9 +134,12 @@ exported symbol, confirm it has zero inbound references, and remove it safely.
 The command drives a find → confirm → edit → verify loop. It queries the graph
 through this CLI (`dead-exports`, `references`, `who-calls`, `blast-radius`) to
 gather context and confirm blast radius, makes exactly one edit, then runs
-`npm run typecheck`. **If type-checking passes the edit stands; if it fails the
-edit is reverted with `git restore`** and the change is abandoned or retried.
-Run it on a clean git tree so you can review (and `git checkout`) what it kept.
+[`ts-knowledge-graph verify`](docs/commands/verify.md) — the type-check **and**
+the test suite as a single gate. **If verify passes the edit stands; if it fails
+the edit is reverted with `git restore`** and the change is abandoned or retried.
+On a project with no test script verify degrades to type-check-only and the agent
+says so, rather than implying the change was behaviourally verified. Run it on a
+clean git tree so you can review (and `git checkout`) what it kept.
 
 A companion command, `/code-graph-interview`
 ([`code-graph-interview.md`](dotclaude_folder/commands/code-graph-interview.md)),
@@ -195,9 +198,17 @@ declaration node the structural layer emitted.
   call-count, or transitive blast radius), defaulting to measured self time when
   enriched and degrading gracefully to static fan-in when not.
 - [x] **Optimization agent** — the `/code-graph-optimize` Claude Code command,
-  which proposes one edit and keeps it only if `npm run typecheck` passes
-  (otherwise reverts with `git restore`).
-- [ ] **Test verification** — run the test suite alongside the type-check in the
-  verify step, so behavior-changing edits are caught, not just type errors.
+  which proposes one edit and keeps it only if [`verify`](docs/commands/verify.md)
+  (type-check **and** tests) passes (otherwise reverts with `git restore`).
+- [x] **Test verification** — the [`verify`](docs/commands/verify.md) command runs
+  the project's `typecheck` and `test` scripts as one keep/revert gate, so
+  behavior-changing edits are caught, not just type errors. A project with no test
+  script degrades to type-check-only, reported honestly (`behaviorVerified: false`).
+- [x] **Benchmark verification** — the [`benchmark`](docs/commands/benchmark.md)
+  command measures a target node's runtime metric (profile → enrich → cost) over
+  N runs and reports the median + spread, with an advisory baseline→after delta —
+  so an optimization is reported by its *measured* impact (e.g. −57% self-time on
+  `titleCase`) rather than a guess. Advisory by design, distinct from the hard
+  `verify` gate.
 - [ ] **Vector index** — embed per-node summaries for hybrid graph + semantic
   retrieval, so the agent can find candidates by meaning, not just by name.

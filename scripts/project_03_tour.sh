@@ -4,7 +4,9 @@
 #
 # Builds the graph from scratch, then demonstrates the type-layer queries:
 # references and neighbors over EXTENDS / IMPLEMENTS / RETURNS / INSTANTIATES
-# edges, plus the dead-export type alias.
+# edges, plus the dead-export type alias. It enriches with a live CPU profile
+# (hotspots / cost) and closes on the two optimize-loop gates: verify (type-check
+# + tests) and benchmark (describe).
 #
 # Usage:  npm run project03:tour       (or)  bash scripts/project_03_tour.sh
 #
@@ -79,6 +81,12 @@ $CLI cost --db "$DB"
 section 'cost describe — where its inclusive cost goes (callees) and who is responsible for it (callers)'
 $CLI cost "$(idof describe Method shape.ts)" --db "$DB"
 printf '\033[2m  note: the area flow above is 0 by design — describe calls this.area() typed as Shape, so the\n        static CALLS edge targets the abstract Shape.area (no runtime); the real work is in the\n        concrete overrides, reached by dynamic dispatch the graph records as OVERRIDES, not CALLS.\033[0m\n'
+
+section 'verify — the optimize loop’s hard correctness gate: this project’s type-check + tests as one keep/revert verdict'
+$CLI verify --cwd "$PROJECT"
+
+section 'benchmark describe — the advisory measured-impact gate: self-time over 3 runs (median + spread) on a fixed workload'
+$CLI benchmark describe --workload "$ROOT/scripts/benchmarks/project_03_workload.ts" --root "$PROJECT" --db "$DB" --runs 3
 
 section 'done'
 printf 'Interactive: explore the same graph in the browser with\n  npm run project03:web\n'

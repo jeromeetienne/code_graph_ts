@@ -36,6 +36,11 @@ If `./outputs/graph.kuzu` does not exist, build it first with
 `npx ts-knowledge-graph extract . --semantic` followed by `npx ts-knowledge-graph load`
 (the `--semantic` flag is required for caller and heritage edges).
 
+To verify an edit, use this project's own verify gate, which runs the
+type-check **and** the test suite together and returns a single verdict:
+
+- `npx ts-knowledge-graph verify --json` — runs the project's `typecheck` + `test` npm scripts and reports one result. `ok: true` means keep the edit; `ok: false` means revert it (the command also exits non-zero on failure). `behaviorVerified: true` means the tests actually ran and passed — not just the type-check. If the project has no `test` script the test gate is skipped, `degraded` is `true`, and the edit is type-checked only.
+
 For reading exact source text, use the Read tool. For making the change, use the
 Edit tool.
 
@@ -45,10 +50,11 @@ Edit tool.
 2. **Confirm the blast radius.** Before proposing any change you MUST confirm safety with `references` (and `who-calls` or `blast-radius` when useful). A symbol is safe to remove only when it has zero inbound references.
 3. **Read the exact text** with the Read tool so your edit matches the file precisely.
 4. **Make exactly one edit** with the Edit tool.
-5. **Verify, then keep or revert.** Run `npm run typecheck`.
-   - If it passes, the edit stands.
-   - If it fails, revert immediately with `git restore <file>`, then either try a different edit or abandon the change. Never leave a failing type-check behind.
-6. **Stop and summarize.** Report the file changed, the symbol removed, and why removal was safe. If you found no safe change, say so plainly.
+5. **Verify, then keep or revert.** Run `npx ts-knowledge-graph verify --json` — one command that runs the type-check **and** the test suite, so a behaviour-changing edit (a swapped operator, an off-by-one, a dropped branch) is caught, not just a type error.
+   - If `ok` is `true`, the edit stands.
+   - If `ok` is `false`, revert immediately with `git restore <file>`, then either try a different edit or abandon the change. Never leave a failing verify behind.
+6. **Measure the impact (optional — only when the task targets a runtime metric and a workload exists).** If the point of the edit was to make something *faster*, and the project or task supplies a repeatable workload, you can report the measured delta with `npx ts-knowledge-graph benchmark <name> --workload <path> --runs 5` (capture a `--save-baseline` before the edit, compare with `--baseline` after — rebuild the graph in between). This gate is **advisory**: a noisy median with a spread, not a pass/fail. Never present a benchmark delta as a guarantee, and never let it override the hard `verify` result.
+7. **Stop and summarize.** Report the file changed, the symbol removed, and why removal was safe. State plainly **how the edit was verified**: say the change was type-checked *and* tested only when `behaviorVerified` was `true`; if verify ran `degraded` (type-check only, because the project has no test script), say the change was **not** behaviourally verified rather than implying it was. If you measured impact, report it as an advisory delta, not a promise. If you found no safe change, say so plainly.
 
 ## Rules
 

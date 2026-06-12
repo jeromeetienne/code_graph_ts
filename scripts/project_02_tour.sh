@@ -3,7 +3,9 @@
 # Exercise the ts-knowledge-graph call-graph tools against sample_projects/project_02.
 #
 # Builds the graph from scratch, then demonstrates the behavioral-layer queries:
-# who-calls (single caller and the empty/dead case), calls, and blast-radius.
+# who-calls (single caller and the empty/dead case), calls, and blast-radius,
+# enriches with a live CPU profile (hotspots / cost), and closes on the two
+# optimize-loop gates: verify (type-check + tests) and benchmark (parseTerm).
 #
 # Usage:  npm run project02:tour       (or)  bash scripts/project_02_tour.sh
 #
@@ -64,6 +66,12 @@ $CLI cost --db "$DB"
 
 section 'cost tokenize — where its inclusive cost goes (callees) and who is responsible for it (callers)'
 $CLI cost "$(idof tokenize Method tokenizer.ts)" --db "$DB"
+
+section 'verify — the optimize loop’s hard correctness gate: this project’s type-check + tests as one keep/revert verdict'
+$CLI verify --cwd "$PROJECT"
+
+section 'benchmark parseTerm — the advisory measured-impact gate: self-time over 3 runs (median + spread) on a fixed workload'
+$CLI benchmark parseTerm --workload "$ROOT/scripts/benchmarks/project_02_workload.ts" --root "$PROJECT" --db "$DB" --runs 3
 
 section 'done'
 printf 'Interactive: explore the same graph in the browser with\n  npm run project02:web\n'
