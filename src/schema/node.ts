@@ -24,6 +24,7 @@ export const NODE_KINDS = [
 	'ExternalModule',
 	// System-level entities — detection-gated (#31 Part 2+).
 	'ConfigFlag',
+	'ExternalAPI',
 ] as const;
 
 export const NodeKindSchema = z.enum(NODE_KINDS);

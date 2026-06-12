@@ -17,8 +17,8 @@ describe('REFERENCE_EDGE_KINDS', () => {
 		}
 	});
 
-	it('excludes structural and mutation edges', () => {
-		for (const kind of ['CONTAINS', 'IMPORTS', 'EXPORTS', 'WRITES']) {
+	it('excludes structural, mutation, and system-level edges', () => {
+		for (const kind of ['CONTAINS', 'IMPORTS', 'EXPORTS', 'WRITES', 'READS_CONFIG', 'CALLS_EXTERNAL']) {
 			assert.equal(referenceSet.has(kind), false, `expected ${kind} not to be a reference`);
 		}
 	});

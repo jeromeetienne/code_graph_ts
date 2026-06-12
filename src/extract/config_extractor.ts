@@ -2,22 +2,8 @@ import { Node, SourceFile, SyntaxKind } from 'ts-morph';
 import { GraphEdge } from '../schema/edge.js';
 import { GraphNode } from '../schema/node.js';
 import { NodeId } from './node_id.js';
+import { ScopeResolver } from './scope_resolver.js';
 import { Extraction } from './structural_extractor.js';
-
-/**
- * Top-level declaration kinds the structural extractor emits as nodes. Used to
- * attribute a config read to an *emitted* scope: a node nested inside a function
- * (a local, a nested function) is not a graph node, so the walk skips past it to
- * the nearest enclosing emitted declaration.
- */
-const TOP_LEVEL_SCOPE_KINDS = new Set<SyntaxKind>([
-	SyntaxKind.FunctionDeclaration,
-	SyntaxKind.VariableDeclaration,
-	SyntaxKind.ClassDeclaration,
-	SyntaxKind.InterfaceDeclaration,
-	SyntaxKind.EnumDeclaration,
-	SyntaxKind.TypeAliasDeclaration,
-]);
 
 /**
  * Detects configuration reads — `process.env.NAME` and `process.env['NAME']` —
@@ -67,7 +53,7 @@ export class ConfigExtractor {
 		}
 		const flagId = NodeId.forConfigFlag(name);
 		nodes.push({ id: flagId, kind: 'ConfigFlag', name, filePath: 'process.env' });
-		const scopeId = ConfigExtractor.enclosingScopeId(access, moduleId, rootPath);
+		const scopeId = ScopeResolver.enclosingId(access, moduleId, rootPath);
 		edges.push({ id: `READS_CONFIG:${scopeId}->${flagId}`, kind: 'READS_CONFIG', from: scopeId, to: flagId });
 	}
 
@@ -86,26 +72,5 @@ export class ConfigExtractor {
 		const element = access.asKind(SyntaxKind.ElementAccessExpression);
 		const literal = element?.getArgumentExpression()?.asKind(SyntaxKind.StringLiteral);
 		return literal?.getLiteralText();
-	}
-
-	/** Id of the nearest enclosing *emitted* declaration, falling back to the module. */
-	private static enclosingScopeId(node: Node, moduleId: string, rootPath: string): string {
-		const scope = node.getFirstAncestor((ancestor) => ConfigExtractor.isEmittedScope(ancestor));
-		return scope === undefined ? moduleId : NodeId.forDeclaration(scope, rootPath);
-	}
-
-	private static isEmittedScope(node: Node): boolean {
-		const kind = node.getKind();
-		if (kind === SyntaxKind.MethodDeclaration || kind === SyntaxKind.PropertyDeclaration) {
-			return true;
-		}
-		if (TOP_LEVEL_SCOPE_KINDS.has(kind) === false) {
-			return false;
-		}
-		if (kind === SyntaxKind.VariableDeclaration) {
-			const statement = node.asKind(SyntaxKind.VariableDeclaration)?.getVariableStatement();
-			return statement?.getParent()?.getKind() === SyntaxKind.SourceFile;
-		}
-		return node.getParent()?.getKind() === SyntaxKind.SourceFile;
 	}
 }

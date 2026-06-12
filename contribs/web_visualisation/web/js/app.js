@@ -13,6 +13,7 @@ const NODE_COLORS = {
 	Variable: '#2dd4bf',
 	ExternalModule: '#6b7280',
 	ConfigFlag: '#84cc16',
+	ExternalAPI: '#fb7185',
 };
 
 const EDGE_COLORS = {
@@ -30,6 +31,7 @@ const EDGE_COLORS = {
 	WRITES: '#eab308',
 	OVERRIDES: '#94a3b8',
 	READS_CONFIG: '#65a30d',
+	CALLS_EXTERNAL: '#e11d48',
 };
 
 /* Heat ramp for runtime self-time: cool slate → yellow → red ("red = hot"). */

@@ -23,6 +23,15 @@ export class NodeId {
 		return `Config:${name}`;
 	}
 
+	/**
+	 * A graph-wide id for an external HTTP target, keyed by host (e.g. the
+	 * `api.example.com` of a `fetch('https://api.example.com/…')`) so every call to
+	 * the same service collapses to one node.
+	 */
+	static forExternalApi(host: string): string {
+		return `Api:${host}`;
+	}
+
 	static nameOf(node: Node): string {
 		const probe = node as { getName?: () => string | undefined };
 		if (typeof probe.getName !== 'function') {

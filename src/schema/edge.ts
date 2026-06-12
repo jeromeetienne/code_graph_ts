@@ -28,6 +28,7 @@ export const EDGE_KINDS = [
 	'WRITES',
 	// System-level — detection-gated entities, no symbol resolution (#31 Part 2+).
 	'READS_CONFIG',
+	'CALLS_EXTERNAL',
 ] as const;
 
 export const EdgeKindSchema = z.enum(EDGE_KINDS);
@@ -46,8 +47,9 @@ export type EdgeKind = z.infer<typeof EdgeKindSchema>;
  * - `EXPORTS` — marks a symbol as exported; counting it would give every export an
  *   inbound edge from its module and defeat dead-export detection;
  * - `WRITES` — mutating a binding is not using its value;
- * - `READS_CONFIG` — its target is a synthesized `ConfigFlag`, not a code symbol
- *   subject to dead-export analysis.
+ * - `READS_CONFIG` / `CALLS_EXTERNAL` — their targets are synthesized system-level
+ *   nodes (a `ConfigFlag`, an `ExternalAPI`), not code symbols subject to
+ *   dead-export analysis.
  */
 export const REFERENCE_EDGE_KINDS = [
 	'CALLS',
