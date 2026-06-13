@@ -3,6 +3,7 @@ import { Command } from 'commander';
 import { BenchmarkCommand } from './commands/benchmark_command.js';
 import { BlastRadiusCommand } from './commands/blast_radius_command.js';
 import { CallsCommand } from './commands/calls_command.js';
+import { ClusterCommand } from './commands/cluster_command.js';
 import { CostCommand } from './commands/cost_command.js';
 import { DeadExportsCommand } from './commands/dead_exports_command.js';
 import { EnrichCommand } from './commands/enrich_command.js';
@@ -27,6 +28,7 @@ export class Cli {
 		ExtractCommand.register(program);
 		LoadCommand.register(program);
 		EnrichCommand.register(program);
+		ClusterCommand.register(program);
 		FindCommand.register(program);
 		WhoCallsCommand.register(program);
 		CallsCommand.register(program);
