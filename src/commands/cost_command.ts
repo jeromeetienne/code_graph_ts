@@ -1,16 +1,19 @@
 import chalk from 'chalk';
 import { Command } from 'commander';
-import { CostAttribution, CostFlow, CostMetric, CostReport } from '../query/graph_query.js';
+import { CostAttribution, CostFlow, CostFlowGraph, CostMetric, CostReport } from '../query/graph_query.js';
 import { CommandHelpers, DEFAULT_DB_PATH, QueryOptions } from './command_helpers.js';
 
 type CostCommandOptions = QueryOptions & {
 	by?: string;
+	edges?: string;
 	limit: string;
 };
 
 const METRICS: CostMetric[] = ['self-time', 'samples'];
+const FLOWS: CostFlowGraph[] = ['static', 'runtime'];
 
 const NO_RUNTIME_NOTICE = '! no runtime data in graph — run `enrich` first. Inclusive cost needs measured self cost to propagate.';
+const FELLBACK_NOTICE = '! no runtime call edges — run `enrich` first. Propagating along the static call graph instead.';
 
 export class CostCommand {
 	static register(program: Command): void {
@@ -20,6 +23,7 @@ export class CostCommand {
 			.argument('[id]', 'node id to break down causally; omit to rank the whole graph')
 			.option('-d, --db <path>', 'Kùzu database path', DEFAULT_DB_PATH)
 			.option('--by <metric>', `cost metric: ${METRICS.join(', ')}`, 'self-time')
+			.option('--edges <graph>', `call graph to propagate along: ${FLOWS.join(', ')}`, 'static')
 			.option('--limit <n>', 'maximum number of ranked nodes to return', '20')
 			.option('--json', 'emit raw JSON', false)
 			.action(async (id: string | undefined, options: CostCommandOptions) => {
@@ -28,14 +32,20 @@ export class CostCommand {
 					process.exitCode = 1;
 					return;
 				}
+				if (options.edges !== undefined && FLOWS.includes(options.edges as CostFlowGraph) === false) {
+					console.error(chalk.red(`unknown call graph '${options.edges}' — choose one of: ${FLOWS.join(', ')}`));
+					process.exitCode = 1;
+					return;
+				}
 				const by = options.by as CostMetric | undefined;
+				const edges = options.edges as CostFlowGraph | undefined;
 				await CommandHelpers.withQuery(options.db, async (query) => {
 					if (id === undefined) {
-						const report = await query.costRanking({ by, limit: Number(options.limit) });
+						const report = await query.costRanking({ by, edges, limit: Number(options.limit) });
 						CostCommand.printRanking(report, options.json === true);
 						return;
 					}
-					const attribution = await query.costAttribution(id, { by });
+					const attribution = await query.costAttribution(id, { by, edges });
 					CostCommand.printAttribution(attribution, options.json === true);
 				});
 			});
@@ -50,9 +60,13 @@ export class CostCommand {
 			console.log(chalk.yellow(NO_RUNTIME_NOTICE));
 			return;
 		}
+		if (report.fellBack === true) {
+			console.log(chalk.yellow(FELLBACK_NOTICE));
+		}
 		const total = CostCommand.formatAmount(report.metric, report.totalSelf);
 		const coverage = CostCommand.formatCoverage(report.coverage);
-		console.log(chalk.bold(`Inclusive cost by ${report.metric}`) + chalk.gray(` (total self ${total} · coverage ${coverage})`));
+		const flow = report.edges === 'runtime' ? ' along the runtime call graph' : '';
+		console.log(chalk.bold(`Inclusive cost by ${report.metric}${flow}`) + chalk.gray(` (total self ${total} · coverage ${coverage})`));
 		if (report.nodes.length === 0) {
 			console.log(chalk.yellow('(no results)'));
 			return;
@@ -80,6 +94,9 @@ export class CostCommand {
 		if (attribution.enriched === false) {
 			console.log(chalk.yellow(NO_RUNTIME_NOTICE));
 			return;
+		}
+		if (attribution.fellBack === true) {
+			console.log(chalk.yellow(FELLBACK_NOTICE));
 		}
 		const node = attribution.node;
 		const metric = attribution.metric;

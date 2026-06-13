@@ -35,6 +35,7 @@ npx ts-knowledge-graph cost [id] [options]
 | --- | --- | --- |
 | `-d, --db <path>` | `./outputs/graph.kuzu` | Kùzu database path. |
 | `--by <metric>` | `self-time` | Cost metric to propagate: `self-time` (`metadata.runtime.selfMs`) or `samples` (`metadata.runtime.samples`). |
+| `--edges <graph>` | `static` | Call graph to propagate along: `static` (`CALLS`, weighted by call-site count) or `runtime` (`CALLS_RUNTIME` from [`enrich`](enrich.md), weighted by sample flow). Falls back to `static` with a notice when the graph has no runtime call edges. |
 | `--limit <n>` | `20` | Maximum number of ranked nodes (ranking mode only). Clamped to `1`–`1000`. |
 | `--json` | `false` | Emit the raw JSON report instead of the formatted output. |
 
@@ -59,6 +60,14 @@ attribution. (The narrative formula in
 [blog post 7](../blog/07_making_the_graph_causal_runtime_enrichment.article.md)
 omits the `/ W_in(c)` normalization for brevity; without it shares would not sum
 to a meaningful total.)
+
+**Static or runtime call graph.** By default the weights are static call-site
+counts (`--edges static`). With `--edges runtime` the propagation runs over the
+`CALLS_RUNTIME` edges [`enrich`](enrich.md) records, weighted by sample flow — a
+callee's cost is attributed to its callers by how much each *actually* drove it at
+runtime, not by how many call sites appear in source, so a function called once
+from a hot loop outweighs one called from many cold sites. It falls back to the
+static graph (with a notice) when the graph carries no runtime call edges.
 
 **Cycles** (recursion, mutual recursion) would make the recurrence circular, so
 strongly-connected components are collapsed: their self costs are lumped, the

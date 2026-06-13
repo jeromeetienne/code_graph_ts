@@ -260,3 +260,54 @@ describe('GraphQuery cost coverage from the enrich manifest', () => {
 		});
 	});
 });
+
+const runtimeEdge = (fromName: string, fromLine: number, toName: string, toLine: number, samples: number): GraphEdge => ({
+	id: `CALLS_RUNTIME:${fromName}->${toName}`,
+	kind: 'CALLS_RUNTIME',
+	from: symbolId(fromName, fromLine),
+	to: symbolId(toName, toLine),
+	metadata: { source: 'v8-cpuprofile', samples },
+});
+
+const RUNTIME_NODES: GraphNode[] = [
+	node('r1', 1),
+	node('r2', 10),
+	node('r3', 20, { selfMs: 8, samples: 8 }),
+];
+
+// Static call-site counts are equal (1, 1) but runtime samples differ (3, 1), so
+// the two graphs attribute r3's cost differently — the point of `--edges runtime`.
+const RUNTIME_EDGES: GraphEdge[] = [
+	callEdge('r1', 1, 'r3', 20, 1),
+	callEdge('r2', 10, 'r3', 20, 1),
+	runtimeEdge('r1', 1, 'r3', 20, 3),
+	runtimeEdge('r2', 10, 'r3', 20, 1),
+];
+
+describe('GraphQuery.costRanking --edges runtime', () => {
+	it('propagates along the static call graph by default — equal split', () =>
+		withStore(RUNTIME_NODES, RUNTIME_EDGES, async (query) => {
+			const report = await query.costRanking();
+			assert.equal(report.edges, 'static');
+			const inclusive = new Map(report.nodes.map((entry) => [entry.name, entry.inclusiveCost]));
+			assert.equal(inclusive.get('r1'), 4);
+			assert.equal(inclusive.get('r2'), 4);
+		}));
+
+	it('propagates along the runtime call graph, weighting by samples', () =>
+		withStore(RUNTIME_NODES, RUNTIME_EDGES, async (query) => {
+			const report = await query.costRanking({ edges: 'runtime' });
+			assert.equal(report.edges, 'runtime');
+			assert.equal(report.fellBack, false);
+			const inclusive = new Map(report.nodes.map((entry) => [entry.name, entry.inclusiveCost]));
+			assert.equal(inclusive.get('r1'), 6);
+			assert.equal(inclusive.get('r2'), 2);
+		}));
+
+	it('falls back to the static graph when there are no runtime call edges', () =>
+		withStore(WEIGHTED_NODES, WEIGHTED_EDGES, async (query) => {
+			const report = await query.costRanking({ edges: 'runtime' });
+			assert.equal(report.edges, 'static');
+			assert.equal(report.fellBack, true);
+		}));
+});

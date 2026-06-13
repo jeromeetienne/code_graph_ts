@@ -75,6 +75,15 @@ export type HotspotReport = {
 export type CostMetric = 'self-time' | 'samples';
 
 /**
+ * Which call graph cost propagates along:
+ * - `static` — the `CALLS` edges parsed from source, weighted by call-site `count` (default).
+ * - `runtime` — the `CALLS_RUNTIME` edges `enrich` records, weighted by sample flow:
+ *   the call graph as it actually ran, so a hot-loop caller outweighs a cold one.
+ *   Falls back to `static` when the graph has no runtime call edges.
+ */
+export type CostFlowGraph = 'static' | 'runtime';
+
+/**
  * A node carrying its propagated cost. `selfCost` is the measured *exclusive*
  * cost (time in the node itself); `inclusiveCost` adds the cost attributed from
  * everything it transitively calls; `shareOfTotal` is `inclusiveCost` as a
@@ -93,6 +102,8 @@ export type CostRef = SymbolRef & {
 export type CostOptions = {
 	/** Metric to propagate. Defaults to `self-time`. */
 	by?: CostMetric;
+	/** Call graph to propagate along. Defaults to `static`. */
+	edges?: CostFlowGraph;
 	/** Maximum number of ranked nodes to return. Defaults to 20, clamped to [1, 1000]. */
 	limit?: number;
 };
@@ -105,6 +116,10 @@ export type CostOptions = {
 export type CostReport = {
 	/** The metric propagated. */
 	metric: CostMetric;
+	/** The call graph cost propagated along. */
+	edges: CostFlowGraph;
+	/** True when `runtime` edges were requested but the graph had none, so it fell back to `static`. */
+	fellBack: boolean;
 	/** Whether any node in the graph carries `metadata.runtime`. */
 	enriched: boolean;
 	/** Σ self cost over every node — the denominator behind `shareOfTotal`. */
@@ -132,7 +147,7 @@ export type CostFlow = SymbolRef & {
 	amount: number;
 	/** `amount` as a fraction of the focal node's inclusive cost, in [0, 1]. */
 	share: number;
-	/** The `CALLS` edge's call-site count — the propagation weight. */
+	/** The propagation weight — the static call-site count, or runtime samples with `--edges runtime`. */
 	callCount: number;
 };
 
@@ -144,6 +159,8 @@ export type CostFlow = SymbolRef & {
  */
 export type CostAttribution = {
 	metric: CostMetric;
+	edges: CostFlowGraph;
+	fellBack: boolean;
 	enriched: boolean;
 	totalSelf: number;
 	/** Fraction of profiled cost attributed to graph nodes, or `null` without a manifest (see {@link CostReport.coverage}). */
@@ -364,9 +381,9 @@ export class GraphQuery {
 		const enriched = nodes.some((node) => GraphQuery.hasRuntime(node.metadata));
 		const metric: CostMetric = options.by ?? 'self-time';
 		const limit = GraphQuery.clampLimit(options.limit);
-		const edges = await this.readCallEdges();
+		const flow = await this.resolveFlowEdges(options.edges ?? 'static');
 		const manifest = await this.readRuntimeManifest();
-		const model = GraphQuery.computeCostModel(nodes, edges, metric);
+		const model = GraphQuery.computeCostModel(nodes, flow.edges, metric);
 
 		const ranked = nodes
 			.map((node) => GraphQuery.toCostRef(node, model))
@@ -379,6 +396,8 @@ export class GraphQuery {
 
 		return {
 			metric,
+			edges: flow.flow,
+			fellBack: flow.fellBack,
 			enriched,
 			totalSelf: model.totalSelf,
 			measuredNodes: model.measuredNodes,
@@ -398,15 +417,15 @@ export class GraphQuery {
 		const nodes = await this.store.readNodes();
 		const enriched = nodes.some((node) => GraphQuery.hasRuntime(node.metadata));
 		const metric: CostMetric = options.by ?? 'self-time';
-		const edges = await this.readCallEdges();
+		const flow = await this.resolveFlowEdges(options.edges ?? 'static');
 		const manifest = await this.readRuntimeManifest();
-		const model = GraphQuery.computeCostModel(nodes, edges, metric);
+		const model = GraphQuery.computeCostModel(nodes, flow.edges, metric);
 		const nodeById = new Map(nodes.map((node) => [node.id, node]));
 		const coverage = GraphQuery.coverageFor(manifest, metric);
 
 		const focal = nodeById.get(id);
 		if (focal === undefined) {
-			return { metric, enriched, totalSelf: model.totalSelf, coverage, node: null, callees: [], callers: [] };
+			return { metric, edges: flow.flow, fellBack: flow.fellBack, enriched, totalSelf: model.totalSelf, coverage, node: null, callees: [], callers: [] };
 		}
 
 		const focalRef = GraphQuery.toCostRef(focal, model);
@@ -447,7 +466,7 @@ export class GraphQuery {
 		callees.sort((a, b) => b.amount - a.amount || a.filePath.localeCompare(b.filePath) || a.startLine - b.startLine);
 		callers.sort((a, b) => b.amount - a.amount || a.filePath.localeCompare(b.filePath) || a.startLine - b.startLine);
 
-		return { metric, enriched, totalSelf: model.totalSelf, coverage, node: focalRef, callees, callers };
+		return { metric, edges: flow.flow, fellBack: flow.fellBack, enriched, totalSelf: model.totalSelf, coverage, node: focalRef, callees, callers };
 	}
 
 	/**
@@ -491,6 +510,37 @@ export class GraphQuery {
 			fromId: String(row.fromId),
 			toId: String(row.toId),
 			count: GraphQuery.callCount(row.metadata),
+		}));
+	}
+
+	/**
+	 * Resolves the call graph cost propagates along. `runtime` reads the
+	 * `CALLS_RUNTIME` edges `enrich` records, weighted by sample flow; when the
+	 * graph has none (un-enriched, or a profile that captured no in-project calls)
+	 * it falls back to the static `CALLS` graph and flags it.
+	 */
+	private async resolveFlowEdges(requested: CostFlowGraph): Promise<{ edges: CallEdge[]; flow: CostFlowGraph; fellBack: boolean }> {
+		if (requested === 'runtime') {
+			const runtime = await this.readRuntimeCallEdges();
+			if (runtime.length > 0) {
+				return { edges: runtime, flow: 'runtime', fellBack: false };
+			}
+			return { edges: await this.readCallEdges(), flow: 'static', fellBack: true };
+		}
+		return { edges: await this.readCallEdges(), flow: 'static', fellBack: false };
+	}
+
+	/** Reads every `CALLS_RUNTIME` edge with its runtime `samples` as the propagation weight. */
+	private async readRuntimeCallEdges(): Promise<CallEdge[]> {
+		const rows = await this.store.run(
+			`MATCH (caller:GraphNode)-[e:Edge]->(callee:GraphNode)
+			WHERE e.kind = 'CALLS_RUNTIME'
+			RETURN caller.id AS fromId, callee.id AS toId, e.metadata AS metadata`,
+		);
+		return rows.map((row) => ({
+			fromId: String(row.fromId),
+			toId: String(row.toId),
+			count: GraphQuery.edgeSamples(row.metadata),
 		}));
 	}
 
@@ -791,6 +841,12 @@ export class GraphQuery {
 		const metadata = GraphQuery.parseMetadata(value);
 		const count = metadata.count;
 		return typeof count === 'number' && count > 0 ? count : 1;
+	}
+
+	/** Decodes a runtime call edge's `samples` weight, defaulting to 1 when absent. */
+	private static edgeSamples(value: KuzuValue): number {
+		const samples = GraphQuery.parseMetadata(value).samples;
+		return typeof samples === 'number' && samples >= 0 ? samples : 1;
 	}
 
 	private static clampLimit(limit: number | undefined): number {
