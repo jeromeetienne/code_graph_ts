@@ -117,6 +117,8 @@ select { flex: 1; }
 #details-body .edge-count { color: #f59e0b; font-size: 10px; font-variant-numeric: tabular-nums; }
 #details-body a { color: #7db2ff; cursor: pointer; text-decoration: none; }
 #details-body a:hover { text-decoration: underline; }
+#details-body a.file-link { text-decoration: underline; word-break: break-all; }
+#details-body a.file-link::after { content: '↗'; margin-left: 3px; font-size: 9px; opacity: 0.7; }
 
 #runtime.empty .heat-legend,
 #runtime.empty .heat-note,
