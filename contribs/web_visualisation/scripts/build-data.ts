@@ -4,6 +4,12 @@ import { fileURLToPath } from 'node:url';
 import { NODE_KIND_DESCRIPTIONS } from '../../../src/schema/node.js';
 import { EDGE_KIND_DESCRIPTIONS } from '../../../src/schema/edge.js';
 
+/**
+ * Prepended to every generated `.js` data file so editors and the project
+ * type-check skip them — they are emitted artifacts, not hand-written source.
+ */
+const TS_NOCHECK_BANNER = '// @ts-nocheck\n';
+
 const readJsonl = (path: string): unknown[] => readFileSync(path, 'utf8')
 	.split('\n')
 	.filter((line) => line.trim().length > 0)
@@ -18,7 +24,7 @@ const readJsonl = (path: string): unknown[] => readFileSync(path, 'utf8')
 const writeKindDescriptions = (dataDir: string): void => {
 	const payload = { nodes: NODE_KIND_DESCRIPTIONS, edges: EDGE_KIND_DESCRIPTIONS };
 	const outPath = join(dataDir, 'kind_descriptions.js');
-	const banner = '// Generated from src/schema by scripts/build-data.ts. Do not edit by hand.\n';
+	const banner = `${TS_NOCHECK_BANNER}// Generated from src/schema by scripts/build-data.ts. Do not edit by hand.\n`;
 	writeFileSync(outPath, `${banner}window.KIND_DESCRIPTIONS = ${JSON.stringify(payload, null, '\t')};\n`);
 	console.log(`✓ ${Object.keys(NODE_KIND_DESCRIPTIONS).length} node + ${Object.keys(EDGE_KIND_DESCRIPTIONS).length} edge descriptions -> ${outPath}`);
 };
@@ -34,7 +40,7 @@ const main = (): void => {
 
 	const dataDir = join(here, '..', 'web', 'data');
 	const outPath = join(dataDir, 'graph_data.js');
-	writeFileSync(outPath, `window.GRAPH_DATA = ${JSON.stringify({ nodes, edges })};\n`);
+	writeFileSync(outPath, `${TS_NOCHECK_BANNER}window.GRAPH_DATA = ${JSON.stringify({ nodes, edges })};\n`);
 	console.log(`✓ ${nodes.length} nodes, ${edges.length} edges -> ${outPath}`);
 
 	writeKindDescriptions(dataDir);

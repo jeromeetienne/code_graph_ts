@@ -1,5 +1,7 @@
+// @ts-check
 'use strict';
 
+/** @type {Record<string, string>} */
 const NODE_COLORS = {
 	Module: '#4f8cff',
 	Class: '#f59e0b',
@@ -17,6 +19,7 @@ const NODE_COLORS = {
 	Endpoint: '#38bdf8',
 };
 
+/** @type {Record<string, string>} */
 const EDGE_COLORS = {
 	CONTAINS: '#475569',
 	IMPORTS: '#64748b',
@@ -52,6 +55,7 @@ const RUNTIME_UNMEASURED_COLOR = '#243044';
 const RUNTIME_UNMEASURED_BORDER = '#475569';
 const HOTSPOTS_LIMIT = 12;
 
+/** @type {AppState} */
 const state = {
 	nodes: [],
 	edges: [],
@@ -65,7 +69,58 @@ const state = {
 	runtime: { maxSelfMs: 0, measuredCount: 0, totalSelfMs: 0 },
 };
 
-const el = (id) => document.getElementById(id);
+/**
+ * Looks up a required element by id, throwing when it is absent so a missing
+ * template node fails loudly here instead of as a later `null` dereference.
+ * @param {string} id
+ * @returns {HTMLElement}
+ */
+const el = (id) => {
+	const element = document.getElementById(id);
+	if (element === null) {
+		throw new Error(`missing element #${id}`);
+	}
+	return element;
+};
+
+/**
+ * Looks up a required `<input>` by id, narrowing it so `.checked` / `.value` are typed.
+ * @param {string} id
+ * @returns {HTMLInputElement}
+ */
+const inputEl = (id) => {
+	const element = el(id);
+	if ((element instanceof HTMLInputElement) === false) {
+		throw new Error(`element #${id} is not an input`);
+	}
+	return element;
+};
+
+/**
+ * Looks up a required `<select>` by id, narrowing it so `.value` is typed.
+ * @param {string} id
+ * @returns {HTMLSelectElement}
+ */
+const selectEl = (id) => {
+	const element = el(id);
+	if ((element instanceof HTMLSelectElement) === false) {
+		throw new Error(`element #${id} is not a select`);
+	}
+	return element;
+};
+
+/**
+ * Narrows a change/input event target to an `<input>` so `.checked` / `.value`
+ * can be read inside handlers bound to known controls.
+ * @param {EventTarget | null} target
+ * @returns {HTMLInputElement}
+ */
+const asInput = (target) => {
+	if ((target instanceof HTMLInputElement) === false) {
+		throw new Error('event target is not an input');
+	}
+	return target;
+};
 
 /* ---------- data loading ---------- */
 
@@ -73,24 +128,24 @@ function boot() {
 	setupDropzone();
 	setupFolds();
 	el('hide-isolated').addEventListener('change', (event) => {
-		state.hideIsolated = event.target.checked;
+		state.hideIsolated = asInput(event.target).checked;
 		applyFilters();
 	});
 	el('relayout').addEventListener('click', () => runLayout());
 	el('runtime-heat').addEventListener('change', (event) => {
-		state.encoding = event.target.checked === true ? 'runtime' : 'structural';
+		state.encoding = asInput(event.target).checked === true ? 'runtime' : 'structural';
 		if (state.cy !== undefined) {
 			state.cy.style(cyStyle());
 		}
 	});
 	el('only-measured').addEventListener('change', (event) => {
-		state.onlyMeasured = event.target.checked;
+		state.onlyMeasured = asInput(event.target).checked;
 		applyFilters();
 	});
 	el('search').addEventListener('input', () => renderSearchResults());
 	el('search').addEventListener('keydown', (event) => {
 		if (event.key === 'Enter') {
-			const first = document.querySelector('#search-results .hit');
+			const first = /** @type {HTMLElement | null} */ (document.querySelector('#search-results .hit'));
 			if (first !== null) {
 				first.click();
 			}
@@ -120,6 +175,12 @@ async function tryFetch() {
 	}
 }
 
+/**
+ * Parses newline-delimited JSON into records. The records cross an untyped
+ * deserialisation boundary, so callers narrow them via the `setData` signature.
+ * @param {string} text
+ * @returns {any[]}
+ */
 function parseJsonl(text) {
 	return text.split('\n').filter((line) => line.trim().length > 0).map((line) => JSON.parse(line));
 }
@@ -138,6 +199,9 @@ function setupDropzone() {
 	window.addEventListener('drop', async (event) => {
 		event.preventDefault();
 		zone.classList.remove('active');
+		if (event.dataTransfer === null) {
+			return;
+		}
 		for (const file of event.dataTransfer.files) {
 			const records = parseJsonl(await file.text());
 			if (records.length === 0) {
@@ -161,7 +225,10 @@ function setupDropzone() {
 
 const FOLD_STORAGE_KEY = 'ktg.sidebar.folds';
 
-/** Reads the persisted collapsed-by-key map, tolerating absent or malformed storage. */
+/**
+ * Reads the persisted collapsed-by-key map, tolerating absent or malformed storage.
+ * @returns {Record<string, boolean>}
+ */
 function loadFolds() {
 	try {
 		const raw = localStorage.getItem(FOLD_STORAGE_KEY);
@@ -172,7 +239,10 @@ function loadFolds() {
 	}
 }
 
-/** Persists the collapsed-by-key map; a no-op when storage is unavailable (private mode, file://). */
+/**
+ * Persists the collapsed-by-key map; a no-op when storage is unavailable (private mode, file://).
+ * @param {Record<string, boolean>} folds
+ */
 function saveFolds(folds) {
 	try {
 		localStorage.setItem(FOLD_STORAGE_KEY, JSON.stringify(folds));
@@ -188,7 +258,8 @@ function saveFolds(folds) {
  */
 function setupFolds() {
 	const folds = loadFolds();
-	for (const header of document.querySelectorAll('#sidebar .foldable')) {
+	for (const rawHeader of document.querySelectorAll('#sidebar .foldable')) {
+		const header = /** @type {HTMLElement} */ (rawHeader);
 		const key = header.dataset.fold;
 		if (key === undefined) {
 			continue;
@@ -203,11 +274,17 @@ function setupFolds() {
 
 /* ---------- graph construction ---------- */
 
+/**
+ * @param {RawNode[]} nodes
+ * @param {RawEdge[]} edges
+ * @param {string} sourceLabel
+ */
 function setData(nodes, edges, sourceLabel) {
 	state.nodes = nodes;
 	state.edges = edges;
 
 	const nodeIds = new Set(nodes.map((node) => node.id));
+	/** @type {Map<string, number>} */
 	const degree = new Map();
 	for (const edge of edges) {
 		degree.set(edge.from, (degree.get(edge.from) ?? 0) + 1);
@@ -265,6 +342,7 @@ function setData(nodes, edges, sourceLabel) {
 }
 
 function cyStyle() {
+	/** @param {CyCollection} node */
 	const nodeColor = (node) => {
 		if (state.encoding !== 'runtime') {
 			return NODE_COLORS[node.data('kind')] ?? '#9ca3af';
@@ -275,6 +353,7 @@ function cyStyle() {
 		}
 		return heatColor(runtimeFraction(runtime.selfMs));
 	};
+	/** @param {CyCollection} node */
 	const nodeSize = (node) => {
 		if (state.encoding !== 'runtime') {
 			return 8 + Math.sqrt(node.data('degree')) * 4;
@@ -285,6 +364,7 @@ function cyStyle() {
 		}
 		return 12 + runtimeFraction(runtime.selfMs) * 40;
 	};
+	/** @param {CyCollection} node */
 	const isUnmeasured = (node) => node.data('runtime') === undefined || node.data('runtime') === null;
 	return [
 		{
@@ -293,7 +373,7 @@ function cyStyle() {
 				'background-color': nodeColor,
 				'width': nodeSize,
 				'height': nodeSize,
-				'border-width': (node) => state.encoding === 'runtime' && isUnmeasured(node) === true ? 1 : 0,
+				'border-width': (/** @type {CyCollection} */ node) => state.encoding === 'runtime' && isUnmeasured(node) === true ? 1 : 0,
 				'border-color': RUNTIME_UNMEASURED_BORDER,
 				'border-style': 'dashed',
 				'label': 'data(name)',
@@ -307,9 +387,9 @@ function cyStyle() {
 		{
 			selector: 'edge',
 			style: {
-				'width': (edge) => edgeWidth(edge.data('count')),
-				'line-color': (edge) => EDGE_COLORS[edge.data('kind')] ?? '#475569',
-				'target-arrow-color': (edge) => EDGE_COLORS[edge.data('kind')] ?? '#475569',
+				'width': (/** @type {CyCollection} */ edge) => edgeWidth(edge.data('count')),
+				'line-color': (/** @type {CyCollection} */ edge) => EDGE_COLORS[edge.data('kind')] ?? '#475569',
+				'target-arrow-color': (/** @type {CyCollection} */ edge) => EDGE_COLORS[edge.data('kind')] ?? '#475569',
 				'target-arrow-shape': 'triangle',
 				'arrow-scale': 0.6,
 				'curve-style': 'bezier',
@@ -323,16 +403,24 @@ function cyStyle() {
 }
 
 function runLayout() {
-	const name = el('layout-select').value;
+	const cy = state.cy;
+	if (cy === undefined) {
+		return;
+	}
+	const name = selectEl('layout-select').value;
 	const options = name === 'concentric'
-		? { name, concentric: (node) => node.degree(), levelWidth: () => 2, animate: false, padding: 30 }
+		? { name, concentric: (/** @type {CyCollection} */ node) => node.degree(), levelWidth: () => 2, animate: false, padding: 30 }
 		: { name, animate: false, padding: 30 };
-	state.cy.elements(':visible').layout(options).run();
+	cy.elements(':visible').layout(options).run();
 }
 
 /* ---------- edge weighting ---------- */
 
-/** Reads the call-site multiplicity off a raw edge's metadata; defaults to 1 when absent. */
+/**
+ * Reads the call-site multiplicity off a raw edge's metadata; defaults to 1 when absent.
+ * @param {RawEdge} edge
+ * @returns {number}
+ */
 function edgeCount(edge) {
 	if (edge.metadata === undefined || edge.metadata === null) {
 		return 1;
@@ -341,7 +429,11 @@ function edgeCount(edge) {
 	return typeof count === 'number' && count > 0 ? count : 1;
 }
 
-/** Maps a call-site count to a stroke width: count 1 keeps the baseline, higher counts thicken sub-linearly. */
+/**
+ * Maps a call-site count to a stroke width: count 1 keeps the baseline, higher counts thicken sub-linearly.
+ * @param {number} count
+ * @returns {number}
+ */
 function edgeWidth(count) {
 	const value = typeof count === 'number' && count > 0 ? count : 1;
 	return 1 + Math.sqrt(value - 1) * 1.8;
@@ -356,9 +448,17 @@ function buildLegends() {
 	renderLegend(el('edge-kinds'), edgeCounts, EDGE_COLORS, state.hiddenEdgeKinds, KIND_DESCRIPTIONS.edges);
 }
 
+/**
+ * @param {HTMLElement} container
+ * @param {[string, number][]} counts
+ * @param {Record<string, string>} colors
+ * @param {Set<string>} hiddenSet
+ * @param {Record<string, string>} descriptions
+ */
 function renderLegend(container, counts, colors, hiddenSet, descriptions) {
 	container.innerHTML = '';
 	const kinds = counts.map(([kind]) => kind);
+	/** @type {HTMLInputElement[]} */
 	const childCheckboxes = [];
 
 	/* Master toggle: checked when every kind is visible, indeterminate on a mixed
@@ -382,7 +482,7 @@ function renderLegend(container, counts, colors, hiddenSet, descriptions) {
 				}
 			}
 			for (const child of childCheckboxes) {
-				child.checked = hiddenSet.has(child.dataset.kind) === false;
+				child.checked = hiddenSet.has(child.dataset.kind ?? '') === false;
 			}
 			syncMaster();
 			applyFilters();
@@ -438,6 +538,9 @@ function renderLegend(container, counts, colors, hiddenSet, descriptions) {
  * Builds the `?` help badge shown after a legend kind. Clicks are swallowed so
  * the badge never toggles the surrounding filter checkbox; hover and keyboard
  * focus reveal the shared tooltip with the kind's description.
+ * @param {string} kind
+ * @param {string} description
+ * @returns {HTMLSpanElement}
  */
 function makeHelpBadge(kind, description) {
 	const badge = document.createElement('span');
@@ -459,6 +562,7 @@ function makeHelpBadge(kind, description) {
 
 /* ---------- hover tooltips ---------- */
 
+/** @type {HTMLElement | undefined} */
 let tooltipEl;
 
 /** Lazily creates the single shared tooltip element, appended to <body> so the sidebar's overflow cannot clip it. */
@@ -472,7 +576,11 @@ function ensureTooltip() {
 	return tooltipEl;
 }
 
-/** Shows the shared tooltip just below an anchor, flipping above / clamping horizontally to stay within the viewport. */
+/**
+ * Shows the shared tooltip just below an anchor, flipping above / clamping horizontally to stay within the viewport.
+ * @param {HTMLElement} anchor
+ * @param {string} text
+ */
 function showTooltip(anchor, text) {
 	const tip = ensureTooltip();
 	tip.textContent = text;
@@ -523,7 +631,12 @@ function applyFilters() {
 	});
 }
 
+/**
+ * @param {string[]} values
+ * @returns {[string, number][]}
+ */
 function countBy(values) {
+	/** @type {Map<string, number>} */
 	const counts = new Map();
 	for (const value of values) {
 		counts.set(value, (counts.get(value) ?? 0) + 1);
@@ -533,7 +646,11 @@ function countBy(values) {
 
 /* ---------- runtime ---------- */
 
-/** Reads the `metadata.runtime` metrics off a raw node, or `undefined` if un-measured. */
+/**
+ * Reads the `metadata.runtime` metrics off a raw node, or `undefined` if un-measured.
+ * @param {RawNode} node
+ * @returns {NodeRuntime | undefined}
+ */
 function nodeRuntime(node) {
 	if (node.metadata === undefined || node.metadata === null) {
 		return undefined;
@@ -542,7 +659,11 @@ function nodeRuntime(node) {
 	return runtime === undefined || runtime === null ? undefined : runtime;
 }
 
-/** Maps a self-time to [0, 1] on a square-root scale so mid-range hotspots stay visible. */
+/**
+ * Maps a self-time to [0, 1] on a square-root scale so mid-range hotspots stay visible.
+ * @param {number | undefined} selfMs
+ * @returns {number}
+ */
 function runtimeFraction(selfMs) {
 	const max = state.runtime.maxSelfMs;
 	if (max <= 0) {
@@ -551,7 +672,11 @@ function runtimeFraction(selfMs) {
 	return Math.sqrt(Math.max(0, selfMs ?? 0) / max);
 }
 
-/** Interpolates the heat ramp at the given fraction, returning an `rgb(...)` string. */
+/**
+ * Interpolates the heat ramp at the given fraction, returning an `rgb(...)` string.
+ * @param {number} fraction
+ * @returns {string}
+ */
 function heatColor(fraction) {
 	const f = Math.min(1, Math.max(0, fraction));
 	let lo = HEAT_STOPS[0];
@@ -565,11 +690,16 @@ function heatColor(fraction) {
 	}
 	const span = hi.at - lo.at || 1;
 	const t = (f - lo.at) / span;
+	/** @param {number} index */
 	const channel = (index) => Math.round(lo.color[index] + (hi.color[index] - lo.color[index]) * t);
 	return `rgb(${channel(0)}, ${channel(1)}, ${channel(2)})`;
 }
 
-/** Human-readable self-time: seconds above 1 s, otherwise milliseconds. */
+/**
+ * Human-readable self-time: seconds above 1 s, otherwise milliseconds.
+ * @param {number} ms
+ * @returns {string}
+ */
 function formatMs(ms) {
 	if (ms >= 1000) {
 		return `${(ms / 1000).toFixed(1)} s`;
@@ -580,23 +710,30 @@ function formatMs(ms) {
 	return `${ms.toFixed(2)} ms`;
 }
 
-/** Centers and selects a node by id — shared by the hotspots list and search results. */
+/**
+ * Centers and selects a node by id — shared by the hotspots list and search results.
+ * @param {string} id
+ */
 function focusNode(id) {
-	const node = state.cy.getElementById(id);
+	const cy = state.cy;
+	if (cy === undefined) {
+		return;
+	}
+	const node = cy.getElementById(id);
 	if (node.length === 1) {
 		select(node);
-		state.cy.animate({ center: { eles: node }, zoom: 2 }, { duration: 350 });
+		cy.animate({ center: { eles: node }, zoom: 2 }, { duration: 350 });
 	}
 }
 
 /** Renders the coverage line and the ranked hotspots list from the loaded runtime metrics. */
 function renderRuntime() {
 	const section = el('runtime');
-	const toggle = el('runtime-heat');
+	const toggle = inputEl('runtime-heat');
 	const measured = state.nodes
 		.map((node) => ({ node, runtime: nodeRuntime(node) }))
 		.filter((entry) => entry.runtime !== undefined)
-		.sort((a, b) => (b.runtime.selfMs ?? 0) - (a.runtime.selfMs ?? 0));
+		.sort((a, b) => (b.runtime?.selfMs ?? 0) - (a.runtime?.selfMs ?? 0));
 
 	if (measured.length === 0) {
 		section.classList.add('empty');
@@ -605,7 +742,7 @@ function renderRuntime() {
 		toggle.disabled = true;
 		state.encoding = 'structural';
 		state.onlyMeasured = false;
-		el('only-measured').checked = false;
+		inputEl('only-measured').checked = false;
 		el('hotspots').innerHTML = '';
 		if (state.cy !== undefined) {
 			state.cy.style(cyStyle());
@@ -615,7 +752,7 @@ function renderRuntime() {
 
 	section.classList.remove('empty');
 	toggle.disabled = false;
-	el('only-measured').disabled = false;
+	inputEl('only-measured').disabled = false;
 	el('coverage').textContent = `${state.runtime.measuredCount} / ${state.nodes.length} nodes measured · ${formatMs(state.runtime.totalSelfMs)} total self-time`;
 
 	const list = el('hotspots');
@@ -623,7 +760,7 @@ function renderRuntime() {
 	for (const { node, runtime } of measured.slice(0, HOTSPOTS_LIMIT)) {
 		const row = document.createElement('div');
 		row.className = 'hotspot';
-		row.innerHTML = `<span class="heat-swatch" style="background:${heatColor(runtimeFraction(runtime.selfMs))}"></span><span class="hotspot-name">${escapeHtml(node.name)}</span><span class="hotspot-ms">${escapeHtml(formatMs(runtime.selfMs ?? 0))}</span>`;
+		row.innerHTML = `<span class="heat-swatch" style="background:${heatColor(runtimeFraction(runtime?.selfMs))}"></span><span class="hotspot-name">${escapeHtml(node.name)}</span><span class="hotspot-ms">${escapeHtml(formatMs(runtime?.selfMs ?? 0))}</span>`;
 		row.addEventListener('click', () => focusNode(node.id));
 		list.appendChild(row);
 	}
@@ -632,7 +769,7 @@ function renderRuntime() {
 /* ---------- search ---------- */
 
 function renderSearchResults() {
-	const query = el('search').value.trim().toLowerCase();
+	const query = inputEl('search').value.trim().toLowerCase();
 	const container = el('search-results');
 	container.innerHTML = '';
 	if (query.length < 2) {
@@ -652,8 +789,12 @@ function renderSearchResults() {
 
 /* ---------- selection & details ---------- */
 
+/** @param {CyCollection} node */
 function select(node) {
 	const cy = state.cy;
+	if (cy === undefined) {
+		return;
+	}
 	cy.elements().addClass('faded').removeClass('sel');
 	const hood = node.closedNeighborhood();
 	hood.removeClass('faded');
@@ -662,7 +803,9 @@ function select(node) {
 }
 
 function clearSelection() {
-	state.cy.elements().removeClass('faded sel');
+	if (state.cy !== undefined) {
+		state.cy.elements().removeClass('faded sel');
+	}
 	el('details-body').textContent = 'click a node';
 }
 
@@ -673,6 +816,9 @@ const SOURCE_FILE_PATTERN = /\.(?:tsx?|mts|cts|jsx?|mjs|cjs)$/;
  * Builds a GitHub permalink for a node's file at the analysed commit, or
  * `undefined` when no source was configured (server-side `--source`) or the path
  * is not a real source file. Line anchors are added only when a start line is known.
+ * @param {unknown} filePath
+ * @param {number} startLine
+ * @returns {string | undefined}
  */
 function githubFileUrl(filePath, startLine) {
 	const source = window.GRAPH_SOURCE;
@@ -688,13 +834,18 @@ function githubFileUrl(filePath, startLine) {
 	return `${baseUrl}/blob/${commit}/${encoded}${anchor}`;
 }
 
+/** @param {CyCollection} node */
 function renderDetails(node) {
 	const id = node.id();
 	const color = NODE_COLORS[node.data('kind')] ?? '#9ca3af';
 	const outgoing = state.edges.filter((edge) => edge.from === id);
 	const incoming = state.edges.filter((edge) => edge.to === id);
-	const nodeById = new Map(state.nodes.map((entry) => [entry.id, entry]));
+	const nodeById = new Map(state.nodes.map((entry) => /** @type {[string, RawNode]} */ ([entry.id, entry])));
 
+	/**
+	 * @param {RawEdge[]} edges
+	 * @param {'out' | 'in'} direction
+	 */
 	const renderEdgeRows = (edges, direction) => edges.map((edge) => {
 		const otherId = direction === 'out' ? edge.to : edge.from;
 		const other = nodeById.get(otherId);
@@ -732,17 +883,28 @@ function renderDetails(node) {
 	`;
 	el('details-body').querySelectorAll('a[data-target]').forEach((link) => {
 		link.addEventListener('click', () => {
-			const target = state.cy.getElementById(link.dataset.target);
+			const cy = state.cy;
+			if (cy === undefined) {
+				return;
+			}
+			const anchor = /** @type {HTMLElement} */ (link);
+			const target = cy.getElementById(anchor.dataset.target ?? '');
 			if (target.length === 1) {
 				select(target);
-				state.cy.animate({ center: { eles: target } }, { duration: 300 });
+				cy.animate({ center: { eles: target } }, { duration: 300 });
 			}
 		});
 	});
 }
 
+const ESCAPE_REPLACEMENTS = /** @type {Record<string, string>} */ ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' });
+
+/**
+ * @param {unknown} value
+ * @returns {string}
+ */
 function escapeHtml(value) {
-	return String(value).replace(/[&<>"']/g, (char) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[char]));
+	return String(value).replace(/[&<>"']/g, (char) => ESCAPE_REPLACEMENTS[char]);
 }
 
 boot();

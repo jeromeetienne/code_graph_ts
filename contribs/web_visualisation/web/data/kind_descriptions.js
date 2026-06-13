@@ -1,3 +1,4 @@
+// @ts-nocheck
 // Generated from src/schema by scripts/build-data.ts. Do not edit by hand.
 window.KIND_DESCRIPTIONS = {
 	"nodes": {

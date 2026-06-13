@@ -29,7 +29,7 @@
 		"clean:outputs": "rm -rf ./outputs/*/",
 		"symlink:dotclaude": "bash scripts/symlink_dotclaude.sh",
 		"publish:all": "npm run build && npm version patch && npm publish",
-		"typecheck": "tsc --noEmit",
+		"typecheck": "tsc --noEmit && tsc -p contribs/web_visualisation/web/tsconfig.json",
 		"test": "node --import tsx --test \"tests/**/*.test.ts\"",
 		"verify": "tsx src/cli.ts verify",
 		"project01": "npm run project01:rebuild && npm run project01:dead-exports",
