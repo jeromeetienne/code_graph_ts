@@ -9,7 +9,7 @@
 	"files": [
 		"dist",
 		"contribs/web_visualisation/web",
-		"dotclaude_folder/skills/code-graph-query/SKILL.md",
+		"dotclaude_folder",
 		"README.md",
 		"LICENSE"
 	],
