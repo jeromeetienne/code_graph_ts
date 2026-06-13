@@ -106,6 +106,13 @@ body { display: flex; }
 	border-color: #64748b;
 	outline: none;
 }
+.legend label.master {
+	margin-bottom: 4px;
+	padding-bottom: 4px;
+	border-bottom: 1px solid #1e293b;
+	color: #94a3b8;
+}
+.legend .swatch.spacer { background: transparent; }
 
 .kind-tooltip {
 	position: fixed;

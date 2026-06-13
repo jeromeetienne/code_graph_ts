@@ -54,6 +54,9 @@ npx serve        # or: python3 -m http.server
   edges are the hot connections.
 - Uncheck noisy kinds (`CONTAINS`, `IMPORTS`) to see the behavioral core;
   enable **hide isolated nodes** to drop whatever the filter disconnected.
+- The **all** checkbox atop Node kinds / Edge kinds toggles every kind at once —
+  hide all, then re-check just the few you want to isolate (it shows a dash when
+  only some kinds are visible).
 - Click a node to fade everything outside its neighborhood and list its edges
   in the sidebar — the links navigate the graph.
 - **Fold any sidebar section** by clicking its header (Runtime, Hotspots, Node
