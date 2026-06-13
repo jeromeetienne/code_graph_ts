@@ -36,7 +36,7 @@ type WebOptions = {
 };
 
 /**
- * `web` command — serves the knowledge graph database in an interactive web
+ * `webview` command — serves the knowledge graph database in an interactive web
  * visualisation. The graph is read from Kùzu once at startup and injected into
  * the page as `/data/graph_data.js`; all other assets are served statically
  * from the contribs/webview/web directory.
@@ -44,7 +44,7 @@ type WebOptions = {
 export class WebCommand {
 	static register(program: Command): void {
 		program
-			.command('web')
+			.command('webview')
 			.description('serve the knowledge graph database in a web visualisation')
 			.option('-d, --db <path>', 'Kùzu database path', DEFAULT_DB_PATH)
 			.option('-p, --port <port>', 'HTTP port to listen on', DEFAULT_PORT)

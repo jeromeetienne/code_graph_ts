@@ -21,7 +21,7 @@
 	},
 	"scripts": {
 		"extract": "tsx src/cli.ts extract",
-		"web": "tsx src/cli.ts web",
+		"web": "tsx src/cli.ts webview",
 		"dev": "tsx src/cli.ts",
 		"build": "tsc -p tsconfig.build.json",
 		"clean": "npm run clean:dist && npm run clean:outputs",
@@ -51,7 +51,7 @@
 		"project01:references": "tsx src/cli.ts references --db ./outputs/project_01/graph.kuzu",
 		"project01:neighbors": "tsx src/cli.ts neighbors --db ./outputs/project_01/graph.kuzu",
 		"project01:blast-radius": "tsx src/cli.ts blast-radius --db ./outputs/project_01/graph.kuzu",
-		"project01:web": "tsx src/cli.ts web --db ./outputs/project_01/graph.kuzu",
+		"project01:web": "tsx src/cli.ts webview --db ./outputs/project_01/graph.kuzu",
 		"project02": "npm run project02:rebuild && npm run project02:dead-exports",
 		"project02:tour": "bash scripts/project_02_tour.sh",
 		"project02:rebuild": "npm run project02:clean && npm run project02:extract && npm run project02:load",
@@ -71,7 +71,7 @@
 		"project02:references": "tsx src/cli.ts references --db ./outputs/project_02/graph.kuzu",
 		"project02:neighbors": "tsx src/cli.ts neighbors --db ./outputs/project_02/graph.kuzu",
 		"project02:blast-radius": "tsx src/cli.ts blast-radius --db ./outputs/project_02/graph.kuzu",
-		"project02:web": "tsx src/cli.ts web --db ./outputs/project_02/graph.kuzu",
+		"project02:web": "tsx src/cli.ts webview --db ./outputs/project_02/graph.kuzu",
 		"project03": "npm run project03:rebuild && npm run project03:dead-exports",
 		"project03:tour": "bash scripts/project_03_tour.sh",
 		"project03:rebuild": "npm run project03:clean && npm run project03:extract && npm run project03:load",
@@ -91,7 +91,7 @@
 		"project03:references": "tsx src/cli.ts references --db ./outputs/project_03/graph.kuzu",
 		"project03:neighbors": "tsx src/cli.ts neighbors --db ./outputs/project_03/graph.kuzu",
 		"project03:blast-radius": "tsx src/cli.ts blast-radius --db ./outputs/project_03/graph.kuzu",
-		"project03:web": "tsx src/cli.ts web --db ./outputs/project_03/graph.kuzu",
+		"project03:web": "tsx src/cli.ts webview --db ./outputs/project_03/graph.kuzu",
 		"project04": "npm run project04:rebuild && npm run project04:dead-exports",
 		"project04:tour": "bash scripts/project_04_tour.sh",
 		"project04:rebuild": "npm run project04:clean && npm run project04:extract && npm run project04:load",
@@ -111,7 +111,7 @@
 		"project04:references": "tsx src/cli.ts references --db ./outputs/project_04/graph.kuzu",
 		"project04:neighbors": "tsx src/cli.ts neighbors --db ./outputs/project_04/graph.kuzu",
 		"project04:blast-radius": "tsx src/cli.ts blast-radius --db ./outputs/project_04/graph.kuzu",
-		"project04:web": "tsx src/cli.ts web --db ./outputs/project_04/graph.kuzu"
+		"project04:web": "tsx src/cli.ts webview --db ./outputs/project_04/graph.kuzu"
 	},
 	"dependencies": {
 		"chalk": "^5.3.0",

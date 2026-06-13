@@ -1,19 +1,15 @@
----
-title: web
----
-
-# `web`
+# `webview`
 
 Serve the knowledge graph database in an interactive web visualisation — pan and
 zoom, filter by node kind, search symbols, and inspect a node's edges.
 
-Source: [`src/commands/web_command.ts`](https://github.com/jeromeetienne/ts_knowledge_graph/blob/main/src/commands/web_command.ts) ·
-front-end: [`contribs/webview`](https://github.com/jeromeetienne/ts_knowledge_graph/tree/main/contribs/webview)
+Source: [`src/commands/web_command.ts`](../../src/commands/web_command.ts) ·
+front-end: [`contribs/webview`](../../contribs/webview)
 
 ## Synopsis
 
 ```bash
-npx ts-knowledge-graph web [options]
+npx ts-knowledge-graph webview [options]
 ```
 
 ## Arguments
@@ -61,21 +57,21 @@ loaded ~390 nodes, ~1.3k edges from /…/outputs/graph.kuzu
 
 ```bash
 # serve the default database on the default port
-npx ts-knowledge-graph web
+npx ts-knowledge-graph webview
 
 # choose a database and port
-npx ts-knowledge-graph web --db ./outputs/graph.kuzu --port 8080
+npx ts-knowledge-graph webview --db ./outputs/graph.kuzu --port 8080
 ```
 
 ## Notes and caveats
 
 - **The graph is read once, at startup.** Edits to the database after the server
-  starts are not reflected — re-run [`extract`](/commands/extract) and
-  [`load`](/commands/load), then restart `web` to see changes.
+  starts are not reflected — re-run [`extract`](extract.md) and
+  [`load`](load.md), then restart `webview` to see changes.
 - The whole graph is sent to the browser in one payload. This is fine for the
   graphs this tool produces; very large graphs will produce a large initial
   download.
-- Holding the database open here can block a concurrent [`load`](/commands/load). Stop
+- Holding the database open here can block a concurrent [`load`](load.md). Stop
   the server before reloading.
 - The static assets are resolved relative to the command's own module, so the
   same command works both from `src/` (via `tsx`) and from the published `dist/`
@@ -83,6 +79,6 @@ npx ts-knowledge-graph web --db ./outputs/graph.kuzu --port 8080
 
 ## See also
 
-- [`load`](/commands/load) — build the database `web` serves.
-- [`contribs/webview`](https://github.com/jeromeetienne/ts_knowledge_graph/tree/main/contribs/webview) — the
+- [`load`](load.md) — build the database `webview` serves.
+- [`contribs/webview`](../../contribs/webview) — the
   front-end this command serves.

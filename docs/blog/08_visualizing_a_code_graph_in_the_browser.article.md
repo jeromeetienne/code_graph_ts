@@ -44,7 +44,7 @@ npm run web
 # ✓ serving the knowledge graph at http://localhost:4173/
 ```
 
-Under the hood the `web` command does something pleasantly simple: it reads every
+Under the hood the `webview` command does something pleasantly simple: it reads every
 node and edge from the database *once* at startup, serializes them into a
 `window.GRAPH_DATA` blob, and serves an otherwise-static page that renders them:
 

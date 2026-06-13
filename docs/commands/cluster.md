@@ -145,7 +145,7 @@ npx ts-knowledge-graph find titleCase --json
 npx ts-knowledge-graph neighbors '<id>' --json   # the community of each neighbour
 ```
 
-Coloring the [`web`](web.md) visualisation by community is planned
+Coloring the [`webview`](webview.md) visualisation by community is planned
 ([#54](https://github.com/jeromeetienne/ts_knowledge_graph/issues/54)).
 
 **Try it on a sample project:**
@@ -180,5 +180,5 @@ npm run project01:cluster   # detect communities and attach metadata.community
   the runtime counterpart to this structural pass.
 - [`extract`](extract.md) — run with `--semantic` so the `CALLS` / type edges
   `cluster` weights exist.
-- [`web`](web.md) — serve the graph; community coloring is planned
+- [`webview`](webview.md) — serve the graph; community coloring is planned
   ([#54](https://github.com/jeromeetienne/ts_knowledge_graph/issues/54)).

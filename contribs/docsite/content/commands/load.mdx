@@ -81,7 +81,7 @@ npx ts-knowledge-graph load ./outputs/graph --db ./outputs/self.kuzu
   ```
 
 - The database directory can be held open by another process (for example a
-  running [`web`](/commands/web) server). Stop other readers before reloading. If Kùzu
+  running [`webview`](/commands/webview) server). Stop other readers before reloading. If Kùzu
   reports errors about the directory — or the database is from an incompatible
   Kùzu version — delete it and reload.
 - Every downstream command defaults `--db` to `./outputs/graph.kuzu`, so if you

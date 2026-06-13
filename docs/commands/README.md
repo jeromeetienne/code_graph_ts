@@ -65,7 +65,7 @@ TypeScript project ──extract──▶ JSONL graph ──load──▶ Kùzu 
 
 | Command | Purpose |
 | --- | --- |
-| [`web`](web.md) | Serve the graph in an interactive web visualisation. |
+| [`webview`](webview.md) | Serve the graph in an interactive web visualisation. |
 | [`install`](install.md) | Copy the bundled Claude Code commands and skill into a project's `.claude/`. |
 
 The autonomous optimization agent is not a CLI command. It is the

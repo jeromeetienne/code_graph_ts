@@ -31,5 +31,5 @@ export default {
 		type: 'separator',
 		title: 'Use the graph',
 	},
-	web: 'web',
+	webview: 'webview',
 };
