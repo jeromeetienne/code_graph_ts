@@ -1,14 +1,16 @@
 {
-	"name": "express-api",
+	"name": "lamp-capacity",
 	"version": "1.0.0",
 	"private": true,
 	"type": "module",
-	"description": "Sample project 04 for ts-knowledge-graph: a small HTTP API that exercises the system-level layer (Endpoint/HANDLES, ConfigFlag, ExternalAPI).",
+	"description": "Sample project 04 for ts-knowledge-graph: a LAMP server capacity simulation that exercises the system-level layer (Endpoint/HANDLES, ConfigFlag, ExternalAPI) plus a per-dimension type/behavioral structure.",
 	"scripts": {
-		"dev": "tsx ./src/app.ts",
+		"dev": "tsx ./src/main.ts",
+		"test": "node --import tsx --test \"tests/**/*.test.ts\"",
 		"typecheck": "tsc --noEmit"
 	},
 	"devDependencies": {
+		"@types/node": "^20.14.0",
 		"tsx": "^4.16.0",
 		"typescript": "^5.5.0"
 	}

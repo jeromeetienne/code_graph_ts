@@ -15,7 +15,7 @@
 # (npm run projectNN:rebuild), exactly like the other projectNN query scripts.
 set -euo pipefail
 
-PROJECT="${1:?usage: profile_and_enrich.sh <project_01|project_02|project_03>}"
+PROJECT="${1:?usage: profile_and_enrich.sh <project_01|project_02|project_03|project_04>}"
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$ROOT"
@@ -75,6 +75,21 @@ let sink = 0;
 for (let i = 0; i < 4000000; i += 1) {
 	const shape = shapes[i % 3];
 	sink += shape.describe().length + shape.area();
+}
+console.log(sink);
+EOF
+		;;
+	project_04)
+		cat <<'EOF'
+import { Simulator } from './src/sim/simulator.js';
+import { ROUTE_PROFILES } from './src/endpoints/registry.js';
+import { DEFAULT_ARRIVAL_RATES } from './src/workload/workload.js';
+import { loadHardware } from './src/config/hardware.js';
+const hardware = loadHardware();
+let sink = 0;
+for (let i = 0; i < 300000; i += 1) {
+	const result = Simulator.run(ROUTE_PROFILES, DEFAULT_ARRIVAL_RATES, hardware);
+	sink += result.totalServers + result.perDimension[i % 3].latencyMs;
 }
 console.log(sink);
 EOF

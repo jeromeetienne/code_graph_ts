@@ -92,6 +92,8 @@
 		"project04:clean": "rm -rf ./outputs/project_04",
 		"project04:extract": "tsx src/cli.ts extract sample_projects/project_04 --semantic --out ./outputs/project_04/graph",
 		"project04:load": "tsx src/cli.ts load ./outputs/project_04/graph --db ./outputs/project_04/graph.kuzu",
+		"project04:enrich": "bash scripts/profile_and_enrich.sh project_04",
+		"project04:workload": "tsx scripts/benchmarks/project_04_workload.ts",
 		"project04:verify": "tsx src/cli.ts verify --cwd sample_projects/project_04",
 		"project04:dead-exports": "tsx src/cli.ts dead-exports --db ./outputs/project_04/graph.kuzu",
 		"project04:hotspots": "tsx src/cli.ts hotspots --db ./outputs/project_04/graph.kuzu",

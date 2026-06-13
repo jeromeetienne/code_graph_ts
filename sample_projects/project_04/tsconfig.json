@@ -4,12 +4,17 @@
 		"module": "NodeNext",
 		"moduleResolution": "NodeNext",
 		"strict": true,
+		"esModuleInterop": true,
 		"skipLibCheck": true,
 		"forceConsistentCasingInFileNames": true,
+		"noUnusedLocals": true,
+		"noUnusedParameters": true,
 		"noImplicitOverride": true,
-		"noEmit": true
+		"noEmit": true,
+		"types": ["node"]
 	},
 	"include": [
-		"src/**/*.ts"
+		"src/**/*.ts",
+		"tests/**/*.ts"
 	]
 }

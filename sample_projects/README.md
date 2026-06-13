@@ -18,12 +18,14 @@ commands.
 | [`project_01`](project_01/) | `text-kit` | Structural layer — `EXPORTS`, `IMPORTS`, `READS` | Dead exports to delete (`dead-exports`) | ✅ done |
 | [`project_02`](project_02/) | `calc` | Behavioral layer — `CALLS`, `INSTANTIATES` | Single-use helpers to inline (`who-calls`, `blast-radius`) | ✅ done |
 | [`project_03`](project_03/) | `shapes` | Type layer — `EXTENDS`, `IMPLEMENTS`, `OVERRIDES`, `USES_TYPE`, `RETURNS` | Redundant override (`references`, `neighbors`) | ✅ done |
-| [`project_04`](project_04/) | `express-api` | System-level layer — `Endpoint`/`HANDLES`, `ConfigFlag`, `ExternalAPI` | Fixture for the system-level kinds (`find`, `neighbors`, `references`) | ✅ done |
+| [`project_04`](project_04/) | `lamp-capacity` | System-level layer — `Endpoint`/`HANDLES`, `ConfigFlag`, `ExternalAPI` (plus a `DimensionSimulator` interface for the type layer) | Fixture for the system-level kinds (`find`, `neighbors`, `references`) | ✅ done |
 
 Together they cover all four graph layers (structural / type / behavioral /
 system-level) and every query command. The first three each also carry one
 *incidental* secondary optimisation so the samples stay realistic rather than
-single-purpose; `project_04` is the system-level fixture for the #31 kinds.
+single-purpose; `project_04` is the system-level fixture for the #31 kinds — a
+LAMP server capacity simulation, with a deterministic open-loop load generator in
+`scripts/benchmarks/project_04_workload.ts` (issue #38).
 
 ## What every project contains
 
@@ -76,7 +78,7 @@ showcase, against real symbols:
 npm run project01:tour      # structural layer: dead-exports + a single-use helper
 npm run project02:tour      # behavioral layer: who-calls (incl. the dead case), calls, blast-radius
 npm run project03:tour      # type layer: references / neighbors over EXTENDS / IMPLEMENTS / RETURNS
-npm run project04:tour      # system-level layer: Endpoint/HANDLES, ConfigFlag, ExternalAPI
+npm run project04:tour      # system-level + type layer, enrich, and the #38 load-generator verdict
 ```
 
 Each project also has a `projectNN:*` script family for the individual steps —
