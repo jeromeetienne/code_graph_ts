@@ -358,10 +358,51 @@ function buildLegends() {
 
 function renderLegend(container, counts, colors, hiddenSet, descriptions) {
 	container.innerHTML = '';
+	const kinds = counts.map(([kind]) => kind);
+	const childCheckboxes = [];
+
+	/* Master toggle: checked when every kind is visible, indeterminate on a mixed
+	   selection. Clicking it reveals all kinds, or hides all when none are hidden. */
+	const master = document.createElement('input');
+	master.type = 'checkbox';
+	const syncMaster = () => {
+		const hiddenCount = kinds.filter((kind) => hiddenSet.has(kind) === true).length;
+		master.checked = hiddenCount === 0;
+		master.indeterminate = hiddenCount > 0 && hiddenCount < kinds.length;
+	};
+
+	if (kinds.length > 0) {
+		master.addEventListener('change', () => {
+			const allVisible = kinds.every((kind) => hiddenSet.has(kind) === false);
+			for (const kind of kinds) {
+				if (allVisible === true) {
+					hiddenSet.add(kind);
+				} else {
+					hiddenSet.delete(kind);
+				}
+			}
+			for (const child of childCheckboxes) {
+				child.checked = hiddenSet.has(child.dataset.kind) === false;
+			}
+			syncMaster();
+			applyFilters();
+		});
+		const masterLabel = document.createElement('label');
+		masterLabel.className = 'master';
+		masterLabel.title = 'show or hide every kind';
+		const spacer = document.createElement('span');
+		spacer.className = 'swatch spacer';
+		const text = document.createElement('span');
+		text.textContent = 'all';
+		masterLabel.append(master, spacer, text);
+		container.appendChild(masterLabel);
+	}
+
 	for (const [kind, count] of counts) {
 		const label = document.createElement('label');
 		const checkbox = document.createElement('input');
 		checkbox.type = 'checkbox';
+		checkbox.dataset.kind = kind;
 		checkbox.checked = hiddenSet.has(kind) === false;
 		checkbox.addEventListener('change', () => {
 			if (checkbox.checked === true) {
@@ -369,8 +410,10 @@ function renderLegend(container, counts, colors, hiddenSet, descriptions) {
 			} else {
 				hiddenSet.add(kind);
 			}
+			syncMaster();
 			applyFilters();
 		});
+		childCheckboxes.push(checkbox);
 		const swatch = document.createElement('span');
 		swatch.className = 'swatch';
 		swatch.style.background = colors[kind] ?? '#9ca3af';
@@ -387,6 +430,8 @@ function renderLegend(container, counts, colors, hiddenSet, descriptions) {
 		label.append(countSpan);
 		container.appendChild(label);
 	}
+
+	syncMaster();
 }
 
 /**
