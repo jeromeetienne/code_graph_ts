@@ -58,6 +58,7 @@ export class EnrichCommand {
 			`${report.matchedByName} by name, ${report.matchedByRange} by range`,
 		);
 		console.log(`  dropped ${chalk.bold(report.droppedFrames)} frame(s), ${report.droppedSamples} sample(s) — not in graph`);
+		console.log(`  attached ${chalk.bold(report.runtimeEdges)} runtime call edge(s) (CALLS_RUNTIME), ${report.droppedCallEdges} unresolved`);
 
 		if (report.hotspots.length > 0) {
 			console.log(chalk.bold('\nTop self time'));

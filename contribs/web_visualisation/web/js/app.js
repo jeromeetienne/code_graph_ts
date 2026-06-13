@@ -37,6 +37,7 @@ const EDGE_COLORS = {
 	READS_CONFIG: '#65a30d',
 	CALLS_EXTERNAL: '#e11d48',
 	HANDLES: '#0ea5e9',
+	CALLS_RUNTIME: '#be123c',
 };
 
 /* One-line descriptions per node/edge kind, generated from src/schema into

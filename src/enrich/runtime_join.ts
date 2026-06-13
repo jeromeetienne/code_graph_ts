@@ -1,6 +1,6 @@
 import { isAbsolute, relative, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { FrameSample } from './cpu_profile.js';
+import { FrameRef, FrameSample, RuntimeCallEdge } from './cpu_profile.js';
 
 /** A graph node reduced to the fields the join needs. */
 export type RuntimeTargetNode = {
@@ -50,6 +50,21 @@ export type RuntimeJoinResult = {
 export type RuntimeJoinOptions = {
 	/** Project root the profile's absolute frame urls are resolved against. */
 	root: string;
+};
+
+/** A runtime call edge resolved onto graph node ids, weighted by the samples that flowed through it. */
+export type RuntimeEdge = {
+	from: string;
+	to: string;
+	samples: number;
+};
+
+/** The outcome of joining the profile's call-tree edges onto graph nodes. */
+export type RuntimeCallJoinResult = {
+	edges: RuntimeEdge[];
+	matchedEdges: number;
+	droppedEdges: number;
+	droppedSamples: number;
 };
 
 /**
@@ -146,6 +161,61 @@ export class RuntimeJoin {
 		};
 	}
 
+	/**
+	 * Joins the profile's call-tree edges onto graph node ids, reusing the same
+	 * per-frame resolution as {@link join} (name match, then enclosing range) for
+	 * both endpoints. Edges whose caller or callee resolves to nothing, and
+	 * self-edges (recursion landing on one node), are dropped and counted; the
+	 * survivors are aggregated by node pair, summing the samples that flowed through
+	 * each call.
+	 */
+	static joinCallEdges(
+		nodes: RuntimeTargetNode[],
+		callEdges: RuntimeCallEdge[],
+		options: RuntimeJoinOptions,
+	): RuntimeCallJoinResult {
+		const byFile = RuntimeJoin.indexByFile(nodes);
+		const filePaths = [...byFile.keys()];
+		const aggregated = new Map<string, RuntimeEdge>();
+		let matchedEdges = 0;
+		let droppedEdges = 0;
+		let droppedSamples = 0;
+
+		for (const edge of callEdges) {
+			const from = RuntimeJoin.resolveFrame(edge.caller, byFile, filePaths, options.root);
+			const to = RuntimeJoin.resolveFrame(edge.callee, byFile, filePaths, options.root);
+			if (from === undefined || to === undefined || from.id === to.id) {
+				droppedEdges += 1;
+				droppedSamples += edge.samples;
+				continue;
+			}
+			const key = `${from.id}->${to.id}`;
+			const existing = aggregated.get(key);
+			if (existing === undefined) {
+				aggregated.set(key, { from: from.id, to: to.id, samples: edge.samples });
+			} else {
+				existing.samples += edge.samples;
+			}
+			matchedEdges += 1;
+		}
+
+		return { edges: [...aggregated.values()], matchedEdges, droppedEdges, droppedSamples };
+	}
+
+	/** Resolves a single frame to its graph node — file path, then name-or-range within that file — or undefined. */
+	private static resolveFrame(
+		frame: FrameRef,
+		byFile: Map<string, RuntimeTargetNode[]>,
+		filePaths: string[],
+		root: string,
+	): RuntimeTargetNode | undefined {
+		const filePath = RuntimeJoin.resolveFilePath(frame.url, root, byFile, filePaths);
+		if (filePath === undefined) {
+			return undefined;
+		}
+		return RuntimeJoin.resolveNode(byFile.get(filePath) ?? [], frame).node;
+	}
+
 	private static indexByFile(nodes: RuntimeTargetNode[]): Map<string, RuntimeTargetNode[]> {
 		const byFile = new Map<string, RuntimeTargetNode[]>();
 		for (const node of nodes) {
@@ -163,7 +233,7 @@ export class RuntimeJoin {
 	 * Resolves a frame to a node within its file, preferring a name match and
 	 * falling back to an enclosing-range match.
 	 */
-	private static resolveNode(fileNodes: RuntimeTargetNode[], frame: FrameSample): NodeResolution {
+	private static resolveNode(fileNodes: RuntimeTargetNode[], frame: FrameRef): NodeResolution {
 		const nameMatches = RuntimeJoin.nameMatches(fileNodes, frame.functionName);
 		if (nameMatches.length === 1) {
 			return { node: nameMatches[0], via: 'name' };

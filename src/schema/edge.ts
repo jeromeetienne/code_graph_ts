@@ -30,6 +30,8 @@ export const EDGE_KINDS = [
 	'READS_CONFIG',
 	'CALLS_EXTERNAL',
 	'HANDLES',
+	// Runtime — observed dynamically, emitted by `enrich` from a CPU profile.
+	'CALLS_RUNTIME',
 ] as const;
 
 export const EdgeKindSchema = z.enum(EDGE_KINDS);
@@ -58,6 +60,7 @@ export const EDGE_KIND_DESCRIPTIONS: Record<EdgeKind, string> = {
 	READS_CONFIG: 'The source reads the target configuration flag (an environment variable).',
 	CALLS_EXTERNAL: 'The source makes an outbound HTTP call to the target external API.',
 	HANDLES: 'Links an HTTP endpoint to the function that handles it (route to handler).',
+	CALLS_RUNTIME: 'A call observed at runtime in a CPU profile: the source function or method was on the stack directly above the target. Captures dynamic dispatch that static CALLS cannot see.',
 };
 
 /**

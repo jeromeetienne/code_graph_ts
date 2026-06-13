@@ -49,6 +49,20 @@ export type FrameSample = {
 	selfMicros: number;
 };
 
+/** The minimal frame identity the join needs: a function name, a script url, and a one-based line. */
+export type FrameRef = {
+	functionName: string;
+	url: string;
+	line: number;
+};
+
+/** One caller → callee relation from the profile's call tree, weighted by the callee's subtree samples. */
+export type RuntimeCallEdge = {
+	caller: FrameRef;
+	callee: FrameRef;
+	samples: number;
+};
+
 export class CpuProfile {
 	/**
 	 * Parses and validates raw `.cpuprofile` JSON text. Throws a `ZodError` if
@@ -114,5 +128,97 @@ export class CpuProfile {
 			return profile.samples.length;
 		}
 		return profile.nodes.reduce((sum, node) => sum + (node.hitCount ?? 0), 0);
+	}
+
+	/**
+	 * Extracts the runtime call graph from the profile's call tree: one edge per
+	 * parent → child relation (the parent function was on the stack directly above
+	 * the child), weighted by the child's subtree sample count — how much execution
+	 * flowed through that call. Frames carry one-based lines so they resolve against
+	 * graph node ranges, mirroring {@link aggregate}.
+	 */
+	static callEdges(profile: CpuProfileData): RuntimeCallEdge[] {
+		const subtree = CpuProfile.subtreeSamples(profile);
+		const nodeById = new Map(profile.nodes.map((node) => [node.id, node]));
+		const edges: RuntimeCallEdge[] = [];
+		for (const node of profile.nodes) {
+			for (const childId of node.children ?? []) {
+				const child = nodeById.get(childId);
+				if (child === undefined) {
+					continue;
+				}
+				edges.push({
+					caller: CpuProfile.frameRef(node.callFrame),
+					callee: CpuProfile.frameRef(child.callFrame),
+					samples: subtree.get(childId) ?? 0,
+				});
+			}
+		}
+		return edges;
+	}
+
+	private static frameRef(callFrame: { functionName: string; url: string; lineNumber: number }): FrameRef {
+		return { functionName: callFrame.functionName, url: callFrame.url, line: callFrame.lineNumber + 1 };
+	}
+
+	/**
+	 * Sample count per profile-node id: from the per-tick `samples` array when
+	 * present, otherwise each node's `hitCount`. The same weight {@link aggregate}
+	 * attributes, keyed here for the call-tree walk.
+	 */
+	private static samplesByNode(profile: CpuProfileData): Map<number, number> {
+		const counts = new Map<number, number>();
+		const samples = profile.samples;
+		if (samples !== undefined && samples.length > 0) {
+			for (const nodeId of samples) {
+				counts.set(nodeId, (counts.get(nodeId) ?? 0) + 1);
+			}
+			return counts;
+		}
+		for (const node of profile.nodes) {
+			const hits = node.hitCount ?? 0;
+			if (hits > 0) {
+				counts.set(node.id, hits);
+			}
+		}
+		return counts;
+	}
+
+	/**
+	 * Total samples in each profile node's subtree (itself plus all descendants)
+	 * over the call tree. Iterative post-order with an explicit stack so a deep call
+	 * chain cannot overflow, and a guard so a malformed non-tree cannot loop.
+	 */
+	private static subtreeSamples(profile: CpuProfileData): Map<number, number> {
+		const self = CpuProfile.samplesByNode(profile);
+		const nodeById = new Map(profile.nodes.map((node) => [node.id, node]));
+		const subtree = new Map<number, number>();
+		for (const root of profile.nodes) {
+			if (subtree.has(root.id)) {
+				continue;
+			}
+			const stack = [root.id];
+			const onStack = new Set<number>([root.id]);
+			while (stack.length > 0) {
+				const id = stack[stack.length - 1];
+				const children = (nodeById.get(id)?.children ?? []).filter((child) => nodeById.has(child));
+				const pending = children.filter((child) => subtree.has(child) === false && onStack.has(child) === false);
+				if (pending.length > 0) {
+					for (const child of pending) {
+						onStack.add(child);
+						stack.push(child);
+					}
+					continue;
+				}
+				let sum = self.get(id) ?? 0;
+				for (const child of children) {
+					sum += subtree.get(child) ?? 0;
+				}
+				subtree.set(id, sum);
+				onStack.delete(id);
+				stack.pop();
+			}
+		}
+		return subtree;
 	}
 }

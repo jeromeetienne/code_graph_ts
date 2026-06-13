@@ -1,13 +1,17 @@
+import { GraphEdge } from '../schema/edge.js';
 import { RUNTIME_MANIFEST_KEY, RuntimeManifest } from '../schema/runtime_manifest.js';
 import { KuzuStore } from '../store/kuzu_store.js';
 import { CpuProfile } from './cpu_profile.js';
-import { DroppedFrameGroup, RuntimeAttribution, RuntimeJoin } from './runtime_join.js';
+import { DroppedFrameGroup, RuntimeAttribution, RuntimeEdge, RuntimeJoin } from './runtime_join.js';
 
 /** The telemetry source tag written into `metadata.runtime.source`. */
 export const RUNTIME_SOURCE_CPU_PROFILE = 'v8-cpuprofile';
 
 /** Namespaced key under which runtime metrics are stored on a node's metadata. */
 export const RUNTIME_METADATA_KEY = 'runtime';
+
+/** Edge kind under which the runtime call graph extracted from the profile is stored. */
+export const RUNTIME_CALL_EDGE_KIND = 'CALLS_RUNTIME';
 
 /**
  * The measured-weight metrics attached to a node under `metadata.runtime`. The
@@ -40,6 +44,10 @@ export type EnrichReport = {
 	matchedByRange: number;
 	droppedFrames: number;
 	droppedSamples: number;
+	/** Runtime call edges (`CALLS_RUNTIME`) attached after both endpoints resolved to graph nodes. */
+	runtimeEdges: number;
+	/** Profile call-tree edges dropped because an endpoint resolved to no node, or to the same node (recursion). */
+	droppedCallEdges: number;
 	dropped: DroppedFrameGroup[];
 	hotspots: Hotspot[];
 };
@@ -98,6 +106,11 @@ export class RuntimeEnricher {
 		};
 		await store.writeGraphMeta(RUNTIME_MANIFEST_KEY, manifest);
 
+		const callEdges = CpuProfile.callEdges(profile);
+		const edgeResult = RuntimeJoin.joinCallEdges(nodes, callEdges, { root: options.root });
+		await store.clearEdgesByKind(RUNTIME_CALL_EDGE_KIND);
+		await store.writeEdges(edgeResult.edges.map((edge) => RuntimeEnricher.toCallEdge(edge)));
+
 		hotspots.sort((a, b) => b.selfMs - a.selfMs || b.samples - a.samples);
 
 		return {
@@ -110,6 +123,8 @@ export class RuntimeEnricher {
 			matchedByRange: result.matchedByRange,
 			droppedFrames: result.droppedFrames,
 			droppedSamples: result.droppedSamples,
+			runtimeEdges: edgeResult.matchedEdges,
+			droppedCallEdges: edgeResult.droppedEdges,
 			dropped: result.dropped,
 			hotspots,
 		};
@@ -121,6 +136,17 @@ export class RuntimeEnricher {
 			samples: attribution.samples,
 			selfMicros: attribution.selfMicros,
 			selfMs: RuntimeEnricher.microsToMs(attribution.selfMicros),
+		};
+	}
+
+	/** Builds a `CALLS_RUNTIME` graph edge from a resolved runtime call edge, weighted by its sample count. */
+	private static toCallEdge(edge: RuntimeEdge): GraphEdge {
+		return {
+			id: `${RUNTIME_CALL_EDGE_KIND}:${edge.from}->${edge.to}`,
+			kind: RUNTIME_CALL_EDGE_KIND,
+			from: edge.from,
+			to: edge.to,
+			metadata: { source: RUNTIME_SOURCE_CPU_PROFILE, samples: edge.samples },
 		};
 	}
 

@@ -68,6 +68,39 @@ export class KuzuStore {
 	}
 
 	/**
+	 * Inserts or updates edges by (`from`, `to`, `kind`) — the same merge `load`
+	 * uses for its edge pass — onto an already-loaded graph; both endpoint nodes
+	 * must already exist. Used by `enrich` to attach the runtime call graph after
+	 * the static graph is loaded.
+	 */
+	async writeEdges(edges: GraphEdge[]): Promise<void> {
+		if (edges.length === 0) {
+			return;
+		}
+		const stmt = await this.conn.prepare(
+			'MATCH (f:GraphNode {id: $from}), (t:GraphNode {id: $to}) MERGE (f)-[e:Edge {kind: $kind}]->(t) SET e.metadata = $metadata',
+		);
+		for (const edge of edges) {
+			KuzuStore.closeResults(await this.conn.execute(stmt, {
+				from: edge.from,
+				to: edge.to,
+				kind: edge.kind,
+				metadata: KuzuStore.encodeMetadata(edge.metadata),
+			}));
+		}
+	}
+
+	/**
+	 * Removes every edge of a given kind. Used by `enrich` to clear the prior
+	 * runtime call graph before writing a fresh one, so a re-run never leaves stale
+	 * edges behind.
+	 */
+	async clearEdgesByKind(kind: string): Promise<void> {
+		const stmt = await this.conn.prepare('MATCH (:GraphNode)-[e:Edge {kind: $kind}]->(:GraphNode) DELETE e');
+		KuzuStore.closeResults(await this.conn.execute(stmt, { kind }));
+	}
+
+	/**
 	 * Reads every node back from the store, decoding the `metadata` column. Used
 	 * by enrichment to resolve profile frames against the loaded graph's ranges
 	 * and to merge new metadata onto existing records.
