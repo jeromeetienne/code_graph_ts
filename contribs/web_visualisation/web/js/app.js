@@ -50,10 +50,10 @@ const HEAT_STOPS = [
 	{ at: 1, color: [220, 38, 38] },
 ];
 
-/* Un-measured nodes render at a neutral baseline, distinct from a cheap-but-measured node. */
-const RUNTIME_UNMEASURED_COLOR = '#243044';
-const RUNTIME_UNMEASURED_BORDER = '#475569';
 const HOTSPOTS_LIMIT = 12;
+
+/* Persisted theme override ('light' | 'dark'); absent means follow the OS. */
+const THEME_STORAGE_KEY = 'ktg.theme';
 
 /** @type {AppState} */
 const state = {
@@ -127,6 +127,7 @@ const asInput = (target) => {
 function boot() {
 	setupDropzone();
 	setupFolds();
+	setupTheme();
 	el('hide-isolated').addEventListener('change', (event) => {
 		state.hideIsolated = asInput(event.target).checked;
 		applyFilters();
@@ -272,6 +273,83 @@ function setupFolds() {
 	}
 }
 
+/* ---------- theme ---------- */
+
+/**
+ * Reads a CSS custom property off the document root, trimmed. The Cytoscape
+ * style pulls its theme-dependent colours from the same variables the stylesheet
+ * uses, so switching theme is a single attribute flip plus a graph re-style.
+ * @param {string} name
+ * @returns {string}
+ */
+function cssVar(name) {
+	return getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+}
+
+/**
+ * Reads the persisted theme override, or `null` when none is set or storage is unavailable.
+ * @returns {'light' | 'dark' | null}
+ */
+function storedTheme() {
+	try {
+		const value = localStorage.getItem(THEME_STORAGE_KEY);
+		return value === 'light' || value === 'dark' ? value : null;
+	} catch {
+		return null;
+	}
+}
+
+/**
+ * Resolves the active theme: an explicit stored choice wins, otherwise the OS
+ * `prefers-color-scheme`, otherwise dark.
+ * @returns {'light' | 'dark'}
+ */
+function resolveTheme() {
+	const stored = storedTheme();
+	if (stored !== null) {
+		return stored;
+	}
+	return window.matchMedia('(prefers-color-scheme: light)').matches === true ? 'light' : 'dark';
+}
+
+/**
+ * Applies a theme: flips the `data-theme` attribute the stylesheet keys off,
+ * updates the toggle glyph, and re-styles the graph so its canvas-drawn colours
+ * (labels, selection ring, node borders) track the theme.
+ * @param {'light' | 'dark'} theme
+ */
+function applyTheme(theme) {
+	document.documentElement.setAttribute('data-theme', theme);
+	const toggle = el('theme-toggle');
+	toggle.textContent = theme === 'dark' ? '☀' : '☾';
+	toggle.title = theme === 'dark' ? 'Switch to light theme' : 'Switch to dark theme';
+	if (state.cy !== undefined) {
+		state.cy.style(cyStyle());
+	}
+}
+
+/**
+ * Wires the theme toggle: clicking persists and applies the opposite theme, and
+ * — while no explicit choice is stored — the viewer follows later OS changes.
+ */
+function setupTheme() {
+	applyTheme(resolveTheme());
+	el('theme-toggle').addEventListener('click', () => {
+		const next = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+		try {
+			localStorage.setItem(THEME_STORAGE_KEY, next);
+		} catch {
+			/* storage unavailable (private mode, file://) — apply for this session only */
+		}
+		applyTheme(next);
+	});
+	window.matchMedia('(prefers-color-scheme: light)').addEventListener('change', (event) => {
+		if (storedTheme() === null) {
+			applyTheme(event.matches === true ? 'light' : 'dark');
+		}
+	});
+}
+
 /* ---------- graph construction ---------- */
 
 /**
@@ -342,6 +420,12 @@ function setData(nodes, edges, sourceLabel) {
 }
 
 function cyStyle() {
+	const unmeasuredFill = cssVar('--unmeasured-fill');
+	const unmeasuredBorder = cssVar('--unmeasured-border');
+	const nodeBorder = cssVar('--graph-node-border');
+	const nodeBorderWidth = parseFloat(cssVar('--graph-node-border-width')) || 0;
+	const labelColor = cssVar('--graph-label');
+	const selBorder = cssVar('--graph-sel-border');
 	/** @param {CyCollection} node */
 	const nodeColor = (node) => {
 		if (state.encoding !== 'runtime') {
@@ -349,7 +433,7 @@ function cyStyle() {
 		}
 		const runtime = node.data('runtime');
 		if (runtime === undefined || runtime === null) {
-			return RUNTIME_UNMEASURED_COLOR;
+			return unmeasuredFill;
 		}
 		return heatColor(runtimeFraction(runtime.selfMs));
 	};
@@ -373,11 +457,11 @@ function cyStyle() {
 				'background-color': nodeColor,
 				'width': nodeSize,
 				'height': nodeSize,
-				'border-width': (/** @type {CyCollection} */ node) => state.encoding === 'runtime' && isUnmeasured(node) === true ? 1 : 0,
-				'border-color': RUNTIME_UNMEASURED_BORDER,
-				'border-style': 'dashed',
+				'border-width': (/** @type {CyCollection} */ node) => state.encoding === 'runtime' && isUnmeasured(node) === true ? 1 : nodeBorderWidth,
+				'border-color': (/** @type {CyCollection} */ node) => state.encoding === 'runtime' && isUnmeasured(node) === true ? unmeasuredBorder : nodeBorder,
+				'border-style': (/** @type {CyCollection} */ node) => state.encoding === 'runtime' && isUnmeasured(node) === true ? 'dashed' : 'solid',
 				'label': 'data(name)',
-				'color': '#cbd5e1',
+				'color': labelColor,
 				'font-size': 8,
 				'min-zoomed-font-size': 7,
 				'text-valign': 'bottom',
@@ -398,7 +482,7 @@ function cyStyle() {
 		},
 		{ selector: '.hidden', style: { display: 'none' } },
 		{ selector: '.faded', style: { opacity: 0.08, 'text-opacity': 0 } },
-		{ selector: 'node.sel', style: { 'border-width': 3, 'border-color': '#ffffff', 'border-style': 'solid' } },
+		{ selector: 'node.sel', style: { 'border-width': 3, 'border-color': selBorder, 'border-style': 'solid' } },
 	];
 }
 

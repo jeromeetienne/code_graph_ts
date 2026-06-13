@@ -3,12 +3,30 @@
 <head>
 	<meta charset="utf-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1">
-	<title>open_ts_optim_ai — knowledge graph</title>
+	<title>ts-knowledge-graph - Web Visualisation</title>
+	<script>
+		/* Resolve the theme before the stylesheet paints so there is no flash of
+		   the wrong colours. js/app.js owns the toggle and persistence after this. */
+		(function () {
+			try {
+				var stored = localStorage.getItem('ktg.theme');
+				var theme = stored === 'light' || stored === 'dark'
+					? stored
+					: (window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark');
+				document.documentElement.setAttribute('data-theme', theme);
+			} catch (error) {
+				document.documentElement.setAttribute('data-theme', 'dark');
+			}
+		})();
+	</script>
 	<link rel="stylesheet" href="./css/style.css">
 </head>
 <body>
 	<aside id="sidebar">
-		<h1>Knowledge graph</h1>
+		<div class="sidebar-head">
+			<h1>Knowledge graph</h1>
+			<button id="theme-toggle" class="theme-toggle" type="button" aria-label="Switch theme"></button>
+		</div>
 		<div id="status">no data loaded</div>
 
 		<input id="search" type="search" placeholder="Search symbol or file… (Enter)" autocomplete="off">
