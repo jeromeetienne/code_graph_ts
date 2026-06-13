@@ -621,6 +621,28 @@ function clearSelection() {
 	el('details-body').textContent = 'click a node';
 }
 
+/* Real source files we can link to GitHub; external modules, `process.env`, and API hosts carry synthetic paths. */
+const SOURCE_FILE_PATTERN = /\.(?:tsx?|mts|cts|jsx?|mjs|cjs)$/;
+
+/**
+ * Builds a GitHub permalink for a node's file at the analysed commit, or
+ * `undefined` when no source was configured (server-side `--source`) or the path
+ * is not a real source file. Line anchors are added only when a start line is known.
+ */
+function githubFileUrl(filePath, startLine) {
+	const source = window.GRAPH_SOURCE;
+	if (source === undefined || source === null || source.github === undefined) {
+		return undefined;
+	}
+	if (typeof filePath !== 'string' || SOURCE_FILE_PATTERN.test(filePath) === false) {
+		return undefined;
+	}
+	const { baseUrl, commit, prefix } = source.github;
+	const encoded = `${prefix ?? ''}${filePath}`.split('/').map((segment) => encodeURIComponent(segment)).join('/');
+	const anchor = startLine > 0 ? `#L${startLine}` : '';
+	return `${baseUrl}/blob/${commit}/${encoded}${anchor}`;
+}
+
 function renderDetails(node) {
 	const id = node.id();
 	const color = NODE_COLORS[node.data('kind')] ?? '#9ca3af';
@@ -647,9 +669,17 @@ function renderDetails(node) {
 			<div class="metric"><span>source</span><strong>${escapeHtml(String(runtime.source ?? '—'))}</strong></div>
 		</div>`;
 
+	const filePath = node.data('filePath');
+	const startLine = node.data('startLine');
+	const locationText = `${filePath}${startLine > 0 ? ':' + startLine : ''}`;
+	const fileUrl = githubFileUrl(filePath, startLine);
+	const locationHtml = fileUrl === undefined
+		? escapeHtml(locationText)
+		: `<a class="file-link" href="${escapeHtml(fileUrl)}" target="_blank" rel="noopener noreferrer" title="open on GitHub">${escapeHtml(locationText)}</a>`;
+
 	el('details-body').innerHTML = `
 		<div><span class="kind-tag" style="background:${color}">${escapeHtml(node.data('kind'))}</span> <strong>${escapeHtml(node.data('name'))}</strong></div>
-		<div>${escapeHtml(node.data('filePath'))}${node.data('startLine') > 0 ? ':' + node.data('startLine') : ''}</div>
+		<div>${locationHtml}</div>
 		<div class="id">${escapeHtml(id)}</div>
 		${runtimeBlock}
 		<h3>outgoing (${outgoing.length})</h3>${renderEdgeRows(outgoing, 'out')}
