@@ -40,7 +40,7 @@ jobs:
         run: npm ci
 
       - name: Build static export
-        # `next build` sets NODE_ENV=production itself, which is what applies the
+        # The runner sets GITHUB_ACTIONS=true, which is what applies the
         # `/ts_knowledge_graph` basePath in next.config.mjs. Do not set NODE_ENV at
         # the job level — that would make `npm ci` skip devDependencies (typescript).
         run: npm run build
