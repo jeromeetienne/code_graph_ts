@@ -54,13 +54,15 @@ npm run typecheck    # tsc --noEmit
 
 ### A note on rooting the call graph
 
-A leaf library has no in-graph callers of its own public API, and two things the
-graph does *not* count as references would otherwise make every export look
-dead:
+A leaf library has no in-graph callers of its own public API, and two things
+would otherwise make every export look dead:
 
-- **barrel re-exports** (`index.ts`) are `EXPORTS` edges, not references; and
-- **calls inside anonymous callbacks** (e.g. a `test('...', () => { ... })`
-  body) are not captured as `CALLS` edges.
+- **barrel re-exports** (`index.ts`) are `EXPORTS` edges, which the graph does
+  not count as references; and
+- **the tests aren't extracted** — `extract` runs against `src/` only
+  ([issue #61](https://github.com/jeromeetienne/ts_knowledge_graph/issues/61)),
+  so the suites that would otherwise import and exercise the public API never
+  enter the graph.
 
 So each project roots its call graph through a **non-exported `main()`** in
 `src/main.ts` that drives an internal consumer — mirroring how an application's
