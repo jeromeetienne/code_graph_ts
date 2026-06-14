@@ -85,5 +85,8 @@ $CLI verify --cwd "$PROJECT"
 section 'load generator (#38) — a deterministic open-loop ramp to the capacity verdict'
 npx tsx "$ROOT/scripts/benchmarks/project_04_workload.ts"
 
+section 'report — write the CODEBASE_BRIEF, one shareable snapshot of everything above'
+$CLI report -o "$OUT"
+
 section 'done'
 printf 'Interactive: explore the same graph in the browser with\n  npm run project04:webview\n'

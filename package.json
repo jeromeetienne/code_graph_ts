@@ -52,6 +52,7 @@
 		"project01:neighbors": "tsx src/cli.ts neighbors -o ./outputs/project_01",
 		"project01:blast-radius": "tsx src/cli.ts blast-radius -o ./outputs/project_01",
 		"project01:webview": "tsx src/cli.ts webview -o ./outputs/project_01",
+		"project01:report": "tsx src/cli.ts report -o ./outputs/project_01",
 		"project02": "npm run project02:rebuild && npm run project02:dead-exports",
 		"project02:tour": "bash scripts/project_02_tour.sh",
 		"project02:rebuild": "npm run project02:clean && npm run project02:extract && npm run project02:load",
@@ -72,6 +73,7 @@
 		"project02:neighbors": "tsx src/cli.ts neighbors -o ./outputs/project_02",
 		"project02:blast-radius": "tsx src/cli.ts blast-radius -o ./outputs/project_02",
 		"project02:webview": "tsx src/cli.ts webview -o ./outputs/project_02",
+		"project02:report": "tsx src/cli.ts report -o ./outputs/project_02",
 		"project03": "npm run project03:rebuild && npm run project03:dead-exports",
 		"project03:tour": "bash scripts/project_03_tour.sh",
 		"project03:rebuild": "npm run project03:clean && npm run project03:extract && npm run project03:load",
@@ -92,6 +94,7 @@
 		"project03:neighbors": "tsx src/cli.ts neighbors -o ./outputs/project_03",
 		"project03:blast-radius": "tsx src/cli.ts blast-radius -o ./outputs/project_03",
 		"project03:webview": "tsx src/cli.ts webview -o ./outputs/project_03",
+		"project03:report": "tsx src/cli.ts report -o ./outputs/project_03",
 		"project04": "npm run project04:rebuild && npm run project04:dead-exports",
 		"project04:tour": "bash scripts/project_04_tour.sh",
 		"project04:rebuild": "npm run project04:clean && npm run project04:extract && npm run project04:load",
@@ -111,7 +114,8 @@
 		"project04:references": "tsx src/cli.ts references -o ./outputs/project_04",
 		"project04:neighbors": "tsx src/cli.ts neighbors -o ./outputs/project_04",
 		"project04:blast-radius": "tsx src/cli.ts blast-radius -o ./outputs/project_04",
-		"project04:webview": "tsx src/cli.ts webview -o ./outputs/project_04"
+		"project04:webview": "tsx src/cli.ts webview -o ./outputs/project_04",
+		"project04:report": "tsx src/cli.ts report -o ./outputs/project_04"
 	},
 	"dependencies": {
 		"chalk": "^5.3.0",
@@ -123,6 +127,7 @@
 	},
 	"devDependencies": {
 		"@types/node": "^20.14.0",
+		"puppeteer": "^25.1.0",
 		"tsx": "^4.16.0",
 		"typescript": "^5.5.0"
 	}

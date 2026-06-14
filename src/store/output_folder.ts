@@ -52,6 +52,15 @@ export class OutputFolder {
 	}
 
 	/**
+	 * Path of the generated codebase brief for a given file extension (`md`, `pdf`,
+	 * or `json`). Like {@link OutputFolder.dbPath}, the basename lives only here so
+	 * every output path stays derived from the one root.
+	 */
+	reportPath(extension: string): string {
+		return join(this.root, `CODEBASE_BRIEF.${extension}`);
+	}
+
+	/**
 	 * Make a benchmark target name safe as a filename. Targets are symbol names
 	 * (e.g. `titleCase`) but could contain path-like characters; collapse anything
 	 * outside [A-Za-z0-9._-] to '_' so the baseline path stays inside benchDir.

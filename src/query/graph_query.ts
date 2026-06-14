@@ -269,6 +269,36 @@ export class GraphQuery {
 		return GraphQuery.toRefs(rows);
 	}
 
+	/**
+	 * Returns the call cycles in the graph: every strongly-connected component of
+	 * the static `CALLS` graph with more than one member, as the list of its
+	 * symbols, largest cycle first. A purely static structural signal — it needs no
+	 * runtime data — that surfaces mutual-recursion tangles which are hard to spot
+	 * by eye. Reuses the same SCC pass {@link GraphQuery.computeCostModel} relies on.
+	 */
+	async strongCycles(): Promise<SymbolRef[][]> {
+		const nodes = await this.store.readNodes();
+		const edges = await this.readCallEdges();
+		const indexOf = new Map<string, number>();
+		nodes.forEach((node, index) => indexOf.set(node.id, index));
+		const successors: number[][] = nodes.map(() => []);
+		for (const edge of edges) {
+			const from = indexOf.get(edge.fromId);
+			const to = indexOf.get(edge.toId);
+			if (from === undefined || to === undefined || from === to) {
+				continue;
+			}
+			successors[from].push(to);
+		}
+		const { componentOf, componentCount } = GraphQuery.stronglyConnectedComponents(successors);
+		const members: number[][] = Array.from({ length: componentCount }, () => []);
+		componentOf.forEach((component, index) => members[component].push(index));
+		return members
+			.filter((group) => group.length > 1)
+			.map((group) => group.map((index) => GraphQuery.symbolOf(nodes[index])))
+			.sort((a, b) => b.length - a.length);
+	}
+
 	async references(id: string): Promise<NeighborRef[]> {
 		const rows = await this.store.run(
 			`MATCH (n:GraphNode {id: $id})<-[e:Edge]-(other:GraphNode)

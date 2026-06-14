@@ -90,5 +90,8 @@ $CLI verify --cwd "$PROJECT"
 section 'benchmark describe — the advisory measured-impact gate: self-time over 3 runs (median + spread) on a fixed workload'
 $CLI benchmark describe --workload "$ROOT/scripts/benchmarks/project_03_workload.ts" --root "$PROJECT" -o "$OUT" --runs 3
 
+section 'report — write the CODEBASE_BRIEF, one shareable snapshot of everything above'
+$CLI report -o "$OUT"
+
 section 'done'
 printf 'Interactive: explore the same graph in the browser with\n  npm run project03:webview\n'
