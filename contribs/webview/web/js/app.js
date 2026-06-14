@@ -71,6 +71,8 @@ const state = {
 	runtime: { maxSelfMs: 0, measuredCount: 0, totalSelfMs: 0 },
 	communities: [],
 	communityLabels: new Map(),
+	history: [],
+	historyIndex: -1,
 };
 
 /* Register the fcose layout extension (loaded as a CDN global, see index.html) so the
@@ -115,6 +117,19 @@ const selectEl = (id) => {
 	const element = el(id);
 	if ((element instanceof HTMLSelectElement) === false) {
 		throw new Error(`element #${id} is not a select`);
+	}
+	return element;
+};
+
+/**
+ * Looks up a required `<button>` by id, narrowing it so `.disabled` is typed.
+ * @param {string} id
+ * @returns {HTMLButtonElement}
+ */
+const buttonEl = (id) => {
+	const element = el(id);
+	if ((element instanceof HTMLButtonElement) === false) {
+		throw new Error(`element #${id} is not a button`);
 	}
 	return element;
 };
@@ -176,6 +191,8 @@ function boot() {
 			}
 		}
 	});
+	el('nav-back').addEventListener('click', () => navigateHistory(-1));
+	el('nav-forward').addEventListener('click', () => navigateHistory(1));
 
 	if (window.GRAPH_DATA !== undefined) {
 		setData(window.GRAPH_DATA.nodes, window.GRAPH_DATA.edges, 'embedded graph_data.js');
@@ -427,6 +444,9 @@ function setData(nodes, edges, sourceLabel) {
 	state.runtime = { maxSelfMs, measuredCount, totalSelfMs };
 	state.communities = communityCounts(nodes);
 	state.communityLabels = communityLabels(nodes);
+	state.history = [];
+	state.historyIndex = -1;
+	updateHistoryButtons();
 
 	const elements = [
 		...nodes.map((node) => ({
@@ -1147,8 +1167,15 @@ function renderSearchResults() {
 
 /* ---------- selection & details ---------- */
 
-/** @param {CyCollection} node */
-function select(node) {
+/**
+ * Selects a node: fades everything but its closed neighbourhood, highlights it,
+ * and renders its details. User-driven selections also push onto the back/forward
+ * history; replaying that history passes `recordHistory` false so navigating the
+ * trail does not rewrite it.
+ * @param {CyCollection} node
+ * @param {boolean} [recordHistory]
+ */
+function select(node, recordHistory = true) {
 	const cy = state.cy;
 	if (cy === undefined) {
 		return;
@@ -1158,6 +1185,9 @@ function select(node) {
 	hood.removeClass('faded');
 	node.addClass('sel');
 	renderDetails(node);
+	if (recordHistory === true) {
+		recordSelection(node.id());
+	}
 }
 
 function clearSelection() {
@@ -1165,6 +1195,54 @@ function clearSelection() {
 		state.cy.elements().removeClass('faded sel');
 	}
 	el('details-body').textContent = 'click a node';
+}
+
+/**
+ * Records a user-driven selection on the back/forward history: discards any
+ * entries ahead of the cursor (selecting after going back starts a new branch),
+ * appends the node id, and advances the cursor. Re-selecting the current node is
+ * ignored so the trail never holds consecutive duplicates.
+ * @param {string} id
+ */
+function recordSelection(id) {
+	if (state.history[state.historyIndex] === id) {
+		return;
+	}
+	state.history.length = state.historyIndex + 1;
+	state.history.push(id);
+	state.historyIndex = state.history.length - 1;
+	updateHistoryButtons();
+}
+
+/**
+ * Steps the selection cursor by `delta` (−1 back, +1 forward) and re-selects the
+ * node there — without recording — then centres it. A no-op past either end of the
+ * history or when the target node is no longer in the graph.
+ * @param {number} delta
+ */
+function navigateHistory(delta) {
+	const cy = state.cy;
+	if (cy === undefined) {
+		return;
+	}
+	const nextIndex = state.historyIndex + delta;
+	if (nextIndex < 0 || nextIndex >= state.history.length) {
+		return;
+	}
+	const node = cy.getElementById(state.history[nextIndex]);
+	if (node.length !== 1) {
+		return;
+	}
+	state.historyIndex = nextIndex;
+	select(node, false);
+	cy.animate({ center: { eles: node }, zoom: 2 }, { duration: 350 });
+	updateHistoryButtons();
+}
+
+/** Enables each history button only when a step in that direction exists. */
+function updateHistoryButtons() {
+	buttonEl('nav-back').disabled = state.historyIndex <= 0;
+	buttonEl('nav-forward').disabled = state.historyIndex >= state.history.length - 1;
 }
 
 /* Real source files we can link to GitHub; external modules, `process.env`, and API hosts carry synthetic paths. */

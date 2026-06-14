@@ -232,7 +232,12 @@ select, button {
 	cursor: pointer;
 }
 button:hover { background: var(--surface-hover); }
+button:disabled { opacity: .4; cursor: default; }
+button:disabled:hover { background: var(--surface-raised); }
 select { flex: 1; }
+
+.selection-nav { display: flex; gap: 6px; margin: 4px 0 6px; }
+.selection-nav button { flex: none; width: 30px; padding: 3px 0; text-align: center; line-height: 1.2; }
 .colour-by label { font-size: 12px; color: var(--muted-strong); white-space: nowrap; }
 
 #details-body { font-size: 12px; }

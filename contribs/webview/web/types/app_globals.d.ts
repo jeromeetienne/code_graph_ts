@@ -84,6 +84,8 @@ interface AppState {
 	runtime: { maxSelfMs: number; measuredCount: number; totalSelfMs: number };
 	communities: [number, number][];
 	communityLabels: Map<number, string>;
+	history: string[];
+	historyIndex: number;
 }
 
 /* ---------- Cytoscape.js (loaded as a CDN global, untyped) ---------- */
