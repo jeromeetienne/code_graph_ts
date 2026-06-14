@@ -130,16 +130,19 @@ The graph is structural by default, but it becomes **runtime-aware** once you
    - **Graph evidence** — the reference / caller / blast-radius counts that justify it.
    - **Estimated risk** — low / medium / high, argued from blast radius and coupling.
    - **Executor-readiness** — how `/code-graph-optimize` can take this task:
-     - `auto-applicable` — behavior-preserving and self-contained (dead-code
-       removal, a localized equivalent rewrite); the optimizer applies it and proves
-       it with `verify` alone.
+     - `auto-applicable` — behavior-preserving with a bounded, in-graph blast radius
+       (dead-code removal, an internal equivalent rewrite, or a coordinated change
+       whose every call site the graph can enumerate); the optimizer applies it
+       across those sites and proves it with `verify` alone.
      - `needs-workload` — a runtime-improvement; the optimizer can edit it, but can
        only *claim* the speed-up with a `benchmark`, which needs a repeatable
        workload. Name the workload if one exists, or flag that one must be supplied.
-     - `manual` — outside the optimizer's autonomous, single-edit, behavior-
-       preserving scope (cross-cutting or architectural change, anything that alters
-       observable behavior, or a dimension `verify` / `benchmark` cannot ground such
-       as memory, network, or LLM tokens). Present it, but say a human must drive it.
+     - `manual` — outside the optimizer's autonomous, single-coordinated-change,
+       behavior-preserving scope (architectural or cross-cutting change, anything
+       that alters observable behavior, an interface change to a published export
+       whose external consumers the graph cannot see, or a dimension `verify` /
+       `benchmark` cannot ground such as memory, network, or LLM tokens). Present it,
+       but say a human must drive it.
 6. **Present and stop.** Show the user the ranked list of candidate tasks, each
    marked with its **Executor-readiness**, so they know which ones
    `/code-graph-optimize` can take autonomously (`auto-applicable`), which first need

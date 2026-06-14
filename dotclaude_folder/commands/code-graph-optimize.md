@@ -81,16 +81,17 @@ Edit tool.
 ## Method (follow it in order)
 
 1. **Find a candidate.** If the task names a target, `find` it. If the task targets execution time, `enrich` the graph from a CPU profile and rank with `hotspots` / `cost` to locate the hottest symbol. With no task given, dead code is the safest win — call `dead-exports` first.
-2. **Confirm the blast radius.** Before proposing any change you MUST confirm safety with `references` (and `who-calls` or `blast-radius` when useful). A symbol is safe to remove only when it has zero inbound references.
+2. **Confirm and bound the blast radius.** Before any change you MUST map who depends on the target with `references`, `who-calls`, and `blast-radius`. Two shapes are safe to apply autonomously:
+   - **Removal / internal change** — safe when the change does not touch the symbol's contract: a removal needs **zero inbound references**; an internal-only rewrite (same signature, same outputs) needs no call-site edits at all, so `references` / `blast-radius` only tell you who is at risk and `verify` is the gate.
+   - **Coordinated interface change** — when the change *does* touch the contract (a rename, a signature tweak, a moved symbol), it is safe only when you can **enumerate the complete caller / reference set** (`who-calls` + `references`) and that set is **small enough to update in one coherent pass** (a low blast radius). The graph sees only *in-project* references: an interface change to a symbol external code may import (a package entry point or otherwise published export) has an **unbounded** blast radius — treat it as out of autonomous scope. If `blast-radius` returns a large or sprawling impact set, do not attempt it autonomously — downgrade the task or stop. Use `cluster` to check the change stays within one module community; a refactor that ripples across community boundaries is too coupled for one run.
 3. **Read the exact text** with the Read tool so your edit matches the file precisely.
-4. **Make exactly one edit** with the Edit tool. For a **runtime-improvement** task,
-   first capture the before-baseline while the code is still unedited:
+4. **Apply one coordinated change** with the Edit tool. This is **one optimization**, not necessarily one Edit call: a coordinated interface change updates the target *and* every call site you enumerated in step 2, so it may be several Edit calls across several files — but it stays a single, behavior-preserving logical change, and touches nothing outside the enumerated set. For a **runtime-improvement** task, first capture the before-baseline while the code is still unedited:
    `npx ts-knowledge-graph benchmark <name> --workload <path> --runs 5 --save-baseline --json`.
 5. **Verify, then keep or revert (correctness gate — both classes).** Run
    `npx ts-knowledge-graph verify --json`: it runs the type-check **and** the test
    suite, so a behaviour-changing edit (a swapped operator, an off-by-one, a dropped
    branch) is caught, not just a type error.
-   - If `ok` is `false`, revert immediately with `git restore <file>`, then either try a different edit or abandon it. Never leave a failing verify behind.
+   - If `ok` is `false`, revert the **entire** change immediately — `git restore` every file you touched (the target and all updated call sites) — then either try a different change or abandon it. A coordinated change reverts as a whole; never leave a half-applied edit or a failing verify behind.
    - If `ok` is `true`, the edit is *safe*. Whether you may call it an *optimization* depends on its class (step 6).
 6. **Prove the improvement (runtime-improvement tasks only — required, not optional).**
    Re-measure against the baseline you saved in step 4:
@@ -113,5 +114,6 @@ Edit tool.
 - Honor the task's **executor-readiness** when the interview supplied one: `auto-applicable` you may apply and verify; `needs-workload` requires a benchmark workload before you can claim improvement; `manual` is out of autonomous scope — explain why and stop.
 - Preserve observable behavior — identical outputs, same API contract. A runtime-improvement is a behavior-*preserving* change to the implementation (memoization, an equivalent lower-complexity rewrite, batching), never a change to what the code returns.
 - Claim only what a gate proved: `verify` earns "safe / behavior unchanged"; only a measured `improved` benchmark delta earns "optimized / faster".
-- Before your first edit, confirm the target file has no unrelated uncommitted changes, so that a revert restores a known-good state. If it does, mention it and proceed carefully.
-- Apply at most one verified edit per run, mirroring the original optimizer's discipline.
+- Before your first edit, confirm the working tree is clean across the files your change will touch (the target and its call sites), so that a whole-change revert restores a known-good state. If there are unrelated uncommitted changes there, mention it and proceed carefully.
+- Apply at most one verified optimization per run — a single behavior-preserving logical change, even when it spans several call sites within its enumerated blast radius. Do not bundle unrelated changes.
+- Stay inside the blast radius you enumerated and verified. If applying the change correctly would require touching sites you did not enumerate, stop — your impact map was incomplete.
