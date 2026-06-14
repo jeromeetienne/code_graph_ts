@@ -73,6 +73,12 @@ const state = {
 	communityLabels: new Map(),
 };
 
+/* Register the fcose layout extension (loaded as a CDN global, see index.html) so the
+   label-aware force layout is selectable. Guarded so a missing script never breaks the viewer. */
+if (window.cytoscapeFcose !== undefined) {
+	cytoscape.use(window.cytoscapeFcose);
+}
+
 /**
  * Looks up a required element by id, throwing when it is absent so a missing
  * template node fails loudly here instead of as a later `null` dereference.
@@ -423,7 +429,7 @@ function setData(nodes, edges, sourceLabel) {
 		container: el('cy'),
 		elements,
 		style: cyStyle(),
-		layout: { name: 'cose', animate: false, padding: 30 },
+		layout: layoutOptions('fcose'),
 	});
 	state.cy.on('tap', 'node', (event) => select(event.target));
 	state.cy.on('tap', (event) => {
@@ -520,16 +526,31 @@ function cyStyle() {
 	];
 }
 
+/**
+ * Builds Cytoscape layout options for the given layout name. The force layouts
+ * (`fcose`, `cose`) are made label-aware via `nodeDimensionsIncludeLabels`, so each
+ * node's label box is factored into spacing and labels overlap their neighbours less.
+ * @param {string} name
+ * @returns {Record<string, unknown>}
+ */
+function layoutOptions(name) {
+	const base = { name, animate: false, padding: 30 };
+	if (name === 'fcose' || name === 'cose') {
+		return { ...base, nodeDimensionsIncludeLabels: true };
+	}
+	if (name === 'concentric') {
+		return { ...base, concentric: (/** @type {CyCollection} */ node) => node.degree(), levelWidth: () => 2 };
+	}
+	return base;
+}
+
 function runLayout() {
 	const cy = state.cy;
 	if (cy === undefined) {
 		return;
 	}
 	const name = selectEl('layout-select').value;
-	const options = name === 'concentric'
-		? { name, concentric: (/** @type {CyCollection} */ node) => node.degree(), levelWidth: () => 2, animate: false, padding: 30 }
-		: { name, animate: false, padding: 30 };
-	cy.elements(':visible').layout(options).run();
+	cy.elements(':visible').layout(layoutOptions(name)).run();
 }
 
 /* ---------- edge weighting ---------- */

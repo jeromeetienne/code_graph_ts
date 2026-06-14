@@ -139,6 +139,10 @@ interface CytoscapeOptions {
 }
 
 declare function cytoscape(options?: CytoscapeOptions): CyCore;
+declare namespace cytoscape {
+	/** Registers a Cytoscape extension (such as the fcose layout) loaded as a CDN global. */
+	function use(extension: unknown): void;
+}
 
 /* ---------- globals injected into the page ---------- */
 
@@ -146,4 +150,5 @@ interface Window {
 	GRAPH_DATA?: GraphData;
 	KIND_DESCRIPTIONS?: KindDescriptions;
 	GRAPH_SOURCE?: GraphSource | null;
+	cytoscapeFcose?: unknown;
 }
