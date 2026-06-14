@@ -28,6 +28,7 @@
 	--unmeasured-border: #475569;
 	/* Graph canvas colours, read from JS so the graph tracks the theme. */
 	--graph-label: #cbd5e1;
+	--graph-label-bg: #0f172a;
 	--graph-sel-border: #ffffff;
 	--graph-node-border: #334155;
 	--graph-node-border-width: 0;
@@ -59,6 +60,7 @@
 	--unmeasured-fill: #e2e8f0;
 	--unmeasured-border: #94a3b8;
 	--graph-label: #334155;
+	--graph-label-bg: #f8fafc;
 	--graph-sel-border: #0f172a;
 	--graph-node-border: #cbd5e1;
 	--graph-node-border-width: 1;

@@ -446,6 +446,7 @@ function cyStyle() {
 	const nodeBorder = cssVar('--graph-node-border');
 	const nodeBorderWidth = parseFloat(cssVar('--graph-node-border-width')) || 0;
 	const labelColor = cssVar('--graph-label');
+	const labelBg = cssVar('--graph-label-bg');
 	const selBorder = cssVar('--graph-sel-border');
 	/** @param {CyCollection} node */
 	const nodeColor = (node) => {
@@ -495,6 +496,10 @@ function cyStyle() {
 				'min-zoomed-font-size': 7,
 				'text-valign': 'bottom',
 				'text-margin-y': 3,
+				'text-background-color': labelBg,
+				'text-background-opacity': 0.85,
+				'text-background-shape': 'roundrectangle',
+				'text-background-padding': 2,
 			},
 		},
 		{
@@ -510,7 +515,7 @@ function cyStyle() {
 			},
 		},
 		{ selector: '.hidden', style: { display: 'none' } },
-		{ selector: '.faded', style: { opacity: 0.08, 'text-opacity': 0 } },
+		{ selector: '.faded', style: { opacity: 0.08, 'text-opacity': 0, 'text-background-opacity': 0 } },
 		{ selector: 'node.sel', style: { 'border-width': 3, 'border-color': selBorder, 'border-style': 'solid' } },
 	];
 }
