@@ -129,10 +129,24 @@ The graph is structural by default, but it becomes **runtime-aware** once you
    - **Constraints** — what to preserve.
    - **Graph evidence** — the reference / caller / blast-radius counts that justify it.
    - **Estimated risk** — low / medium / high, argued from blast radius and coupling.
-6. **Present and stop.** Show the user the ranked list of candidate tasks. **Do not
-   apply anything and do not invoke `/code-graph-optimize`.** End by telling the
-   user they can run `/code-graph-optimize "<task>"` themselves with whichever task
-   they choose.
+   - **Executor-readiness** — how `/code-graph-optimize` can take this task:
+     - `auto-applicable` — behavior-preserving and self-contained (dead-code
+       removal, a localized equivalent rewrite); the optimizer applies it and proves
+       it with `verify` alone.
+     - `needs-workload` — a runtime-improvement; the optimizer can edit it, but can
+       only *claim* the speed-up with a `benchmark`, which needs a repeatable
+       workload. Name the workload if one exists, or flag that one must be supplied.
+     - `manual` — outside the optimizer's autonomous, single-edit, behavior-
+       preserving scope (cross-cutting or architectural change, anything that alters
+       observable behavior, or a dimension `verify` / `benchmark` cannot ground such
+       as memory, network, or LLM tokens). Present it, but say a human must drive it.
+6. **Present and stop.** Show the user the ranked list of candidate tasks, each
+   marked with its **Executor-readiness**, so they know which ones
+   `/code-graph-optimize` can take autonomously (`auto-applicable`), which first need
+   a benchmark workload (`needs-workload`), and which are `manual`. **Do not apply
+   anything and do not invoke `/code-graph-optimize`.** End by telling the user they
+   can run `/code-graph-optimize "<task>"` themselves with whichever
+   `auto-applicable` or `needs-workload` task they choose.
 
 ## Rules
 
@@ -146,3 +160,5 @@ The graph is structural by default, but it becomes **runtime-aware** once you
   faster" until they have a baseline and a target.
 - Present multiple candidates when the graph supports them, ranked by estimated
   value against risk, so the user can choose.
+- Tag every task with an honest **Executor-readiness** — never mark a runtime task
+  `auto-applicable` when it has no workload to benchmark against.
