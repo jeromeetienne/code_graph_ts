@@ -111,16 +111,17 @@ npm run project01:benchmark
 ## A before/after measurement
 
 The metric is read against the *current* graph, so after an edit you **rebuild
-the graph** (the edit shifts line numbers) before measuring again. Because
-`projectNN:rebuild` wipes `./outputs/<project>`, keep the baseline file
-**outside** that directory:
+the graph** (the edit shifts line numbers) before measuring again.
+`projectNN:rebuild` wipes `./outputs/<project>` but **preserves** its
+`bench/` subdirectory, so keep the baseline file there — it survives the
+post-edit rebuild:
 
 ```bash
 # 1. Baseline, before the edit (save it somewhere the rebuild won't wipe).
 npm run project01:rebuild
 npx ts-knowledge-graph benchmark titleCase --workload scripts/benchmarks/project_01_workload.ts \
   --db ./outputs/project_01/graph.kuzu --root ./sample_projects/project_01 \
-  --save-baseline ./outputs/bench/p01_titleCase.baseline.json
+  --save-baseline ./outputs/project_01/bench/titleCase.baseline.json
 
 # 2. Make the edit, then rebuild so node lines match the new source.
 npm run project01:rebuild
@@ -128,7 +129,7 @@ npm run project01:rebuild
 # 3. After: same command with --baseline → reports the advisory delta.
 npx ts-knowledge-graph benchmark titleCase --workload scripts/benchmarks/project_01_workload.ts \
   --db ./outputs/project_01/graph.kuzu --root ./sample_projects/project_01 \
-  --baseline ./outputs/bench/p01_titleCase.baseline.json
+  --baseline ./outputs/project_01/bench/titleCase.baseline.json
 ```
 
 ### Worked example

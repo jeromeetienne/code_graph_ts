@@ -33,7 +33,7 @@ idof() {
 section() { printf '\n\033[1;36m== %s ==\033[0m\n' "$1"; }
 
 section 'rebuild the graph from scratch (clean → extract → load)'
-rm -rf ./outputs/project_01
+rm -rf ./outputs/project_01/graph ./outputs/project_01/graph.kuzu ./outputs/project_01/prof
 $CLI extract "$PROJECT/src" --semantic --out "$GRAPH"
 $CLI load "$GRAPH" --db "$DB"
 
