@@ -1,0 +1,136 @@
+---
+title: Browse the Graph
+---
+
+# Browse the graph
+
+A knowledge graph is not only a query target — it is a **map**. This guide is for
+the moment you clone an unfamiliar codebase and ask *"what is this, and where do I
+start?"* Instead of reading files top to bottom, you browse the graph: see the
+shape, find the load-bearing parts, and drill in where it matters. It is the
+comprehension counterpart to the [Static Analysis guide](/static-analysis) (which
+answers specific safety questions) and the [Optimize](/optimize) loop (which acts
+on measurements).
+
+## Setup: build the graph
+
+```bash
+npx ts-knowledge-graph extract . --semantic
+npx ts-knowledge-graph load
+```
+
+Use `--semantic` — without it there are no `CALLS`, type, or `READS` edges, and
+the graph is just a file skeleton. Two optional passes make exploration richer:
+[`cluster`](/commands/cluster) (module structure) and [`enrich`](/commands/enrich)
+(runtime heat); both are noted below.
+
+## 1. Open the interactive map
+
+```bash
+npx ts-knowledge-graph webview
+```
+
+[`webview`](/commands/webview) serves the whole graph as one interactive picture —
+the fastest way to grasp a codebase's size and shape. The control sidebar gives you:
+
+- **Search** — jump to any symbol or file by name.
+- **Filter** — toggle node kinds and edge kinds to isolate one layer: show only
+  `CALLS` to read the call graph, or hide `Parameter` nodes to declutter.
+- **Inspect** — click a node for its one-hop edges, and follow it to its exact
+  line on **GitHub** when the graph recorded a source (built from a git checkout).
+
+Everything below is a lens on this same graph — use the visualisation and the CLI
+together.
+
+## 2. See the module structure
+
+**Question:** how does this code actually decompose — beyond the folder layout?
+
+```bash
+npx ts-knowledge-graph cluster
+```
+
+[`cluster`](/commands/cluster) runs community detection over the call / type /
+reference graph and tags each node with `metadata.community`. In the webview,
+**Colour by → community** paints those modules with a legend, so cohesive
+subsystems pop out — often a truer decomposition than the directory tree. After
+[`enrich`](/commands/enrich), **Colour by → runtime** instead draws a self-time
+heat map, showing where the program spends its time.
+
+## 3. Read the one-page brief
+
+**Question:** can I get a written orientation without clicking around?
+
+```bash
+npx ts-knowledge-graph report --stdout
+```
+
+[`report`](/commands/report) writes a `CODEBASE_BRIEF`: totals, composition, the
+load-bearing code, communities, the system boundary, and dead-code candidates — a
+skimmable summary you can read in the terminal or share. It is the textual twin of
+the webview.
+
+## 4. Find the load-bearing symbols
+
+**Question:** which declarations is everything else built on?
+
+```bash
+npx ts-knowledge-graph hotspots --by callers
+```
+
+```
+ 1.   18 callers  Method     run        src/store/kuzu_store.ts:52
+ 2.   11 callers  TypeAlias  GraphNode  src/schema/node.ts:37
+ …
+```
+
+[`hotspots --by callers`](/commands/hotspots) ranks by static fan-in — no profile
+needed — surfacing the most-depended-on symbols, the architectural spine. Switch
+to `--by blast-radius` to rank by how much code a change would ripple into. These
+are the symbols worth understanding first, and the ones to change most carefully.
+
+## 5. Drill in from a name
+
+**Question:** I found an interesting symbol — how is it wired in?
+
+Resolve the name to an id, then walk outward:
+
+```bash
+npx ts-knowledge-graph find KuzuStore --json     # copy the id
+npx ts-knowledge-graph neighbors '<id>'          # everything one hop away, both directions
+npx ts-knowledge-graph calls '<id>'              # what it depends on (forward)
+npx ts-knowledge-graph who-calls '<id>'          # who depends on it (backward)
+```
+
+[`neighbors`](/commands/neighbors) is the best single-step overview: outgoing
+edges show what a node owns and uses; incoming edges show who depends on it,
+labelled by relationship. Follow [`calls`](/commands/calls) outward to sketch a
+top-down call tree from any entry point.
+
+## 6. See where the code meets the outside world
+
+**Question:** what does this system touch beyond its own code?
+
+The graph models the **boundary** as first-class nodes. Browse them in the webview
+(filter to these kinds) or read them in the report's *System boundary* section:
+
+| Node kind | Edge | What it marks |
+| --- | --- | --- |
+| `ConfigFlag` | `READS_CONFIG` | environment-variable configuration the code reads |
+| `ExternalAPI` | `CALLS_EXTERNAL` | outbound HTTP hosts the code calls |
+| `Endpoint` | `HANDLES` | HTTP routes the app registers, linked to their handlers |
+
+This is the quickest read on how a service is configured, what it talks to, and
+what it exposes — the things a README often leaves out.
+
+## Where to go next
+
+- [Static Analysis](/static-analysis) — once oriented, answer precise impact,
+  dead-code, and rename-safety questions.
+- [Optimize Your Code](/optimize) — turn what you found into a measured, verified
+  improvement.
+- [Graph model](/concepts/graph-model) — the full node and edge vocabulary behind
+  every view above.
+- [`webview`](/commands/webview) · [`cluster`](/commands/cluster) ·
+  [`report`](/commands/report) · [`hotspots`](/commands/hotspots) — the commands
+  this guide leans on.

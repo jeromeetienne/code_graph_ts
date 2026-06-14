@@ -176,7 +176,7 @@ npx ts-knowledge-graph references 'TypeAliasDeclaration:src/schema/node.ts#Graph
 ```
 
 Where [`who-calls`](/commands/who-calls) sees only `CALLS`, `references`
-reports all eight reference edge kinds and labels each one — so for a *type* like
+reports all ten reference edge kinds and labels each one — so for a *type* like
 `GraphNode` you see the parameters, return positions, and type aliases that
 depend on it, which calls alone would miss entirely. An empty result is the
 graph's strongest signal that a symbol is safe to delete; pair it with

@@ -1,0 +1,99 @@
+---
+title: install
+---
+
+# `install`
+
+Install the bundled [Claude Code](https://claude.com/claude-code) assets — the
+`/code-graph-optimize` and `/code-graph-interview` slash commands and the
+`code-graph-query` skill — into a project's `.claude/` directory, so an agent can
+drive the knowledge graph through the `ts-knowledge-graph` CLI. This is the
+one-command way to set up the [agent](/agent/slash-commands) in any repository.
+
+Source: [`src/commands/install_command.ts`](https://github.com/jeromeetienne/ts_knowledge_graph/blob/main/src/commands/install_command.ts) ·
+bundled assets: [`dotclaude_folder/`](https://github.com/jeromeetienne/ts_knowledge_graph/tree/main/dotclaude_folder)
+
+## Synopsis
+
+```bash
+npx ts-knowledge-graph install [destFolder] [options]
+```
+
+## Arguments
+
+| Argument | Default | Description |
+| --- | --- | --- |
+| `[destFolder]` | current directory | Project root to install into; assets land under its `.claude/` directory. |
+
+## Options
+
+| Option | Default | Description |
+| --- | --- | --- |
+| `--force` | `false` | Overwrite files that already exist. Without it, existing files are left untouched and reported as skipped. |
+
+## What it does
+
+Mirrors every file under the published package's `dotclaude_folder/` into
+`<destFolder>/.claude/`, preserving the tree so Claude Code finds each asset where
+it expects it:
+
+```
+dotclaude_folder/                      <destFolder>/.claude/
+  commands/                              commands/
+    code-graph-optimize.md       ──▶       code-graph-optimize.md
+    code-graph-interview.md      ──▶       code-graph-interview.md
+  skills/                                skills/
+    code-graph-query/SKILL.md    ──▶       code-graph-query/SKILL.md
+```
+
+An existing file is **skipped** (not overwritten) unless `--force` is given, so
+re-running is safe and local edits are preserved. The command prints one line per
+file — `✓` installed, `✗ skip (exists)` skipped — then a summary.
+
+## Output
+
+```
+✓ commands/code-graph-optimize.md
+✓ commands/code-graph-interview.md
+✓ skills/code-graph-query/SKILL.md
+
+installed 3 file(s) into /…/your-project/.claude
+```
+
+Re-running without `--force` once the files exist:
+
+```
+✗ skip (exists): commands/code-graph-optimize.md
+…
+installed 0 file(s) into /…/your-project/.claude, skipped 3 (pass --force to overwrite)
+```
+
+## Examples
+
+```bash
+# install into the current project's .claude/
+npx ts-knowledge-graph install
+
+# install into a specific project
+npx ts-knowledge-graph install ../other-project
+
+# refresh to the bundled versions, overwriting local copies
+npx ts-knowledge-graph install --force
+```
+
+## Notes and caveats
+
+- **It only copies assets — it does not build a graph.** After installing, the
+  agent still needs a loaded database: `npx ts-knowledge-graph extract . --semantic`
+  then `npx ts-knowledge-graph load`. The slash commands build it on first use if
+  it is missing.
+- **No API key or provider.** The agent runtime is Claude Code itself, so there is
+  nothing else to configure — see [Agent](/agent/slash-commands).
+- **In this repository's own checkout**, the assets are already committed under
+  `.claude/`; `install` is for getting them into *another* project.
+
+## See also
+
+- [Agent](/agent/slash-commands) — the slash commands and skill this installs.
+- [`/code-graph-optimize`](/agent/slash-commands) · [`/code-graph-interview`](/agent/slash-commands)
+  — what you get once it is installed.

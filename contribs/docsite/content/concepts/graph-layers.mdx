@@ -1,0 +1,134 @@
+---
+title: Graph layers
+---
+
+# Graph layers
+
+The graph is built in **layers**. Each one adds a family of edges (and sometimes
+nodes) on top of the layers below it, and each is produced by a different
+mechanism — some are read straight from the syntax tree, some need the TypeScript
+type checker, and one is reconstructed from a runtime profile. Knowing which layer
+a fact comes from tells you two things: **how much to trust it** and **what you had
+to run to get it**.
+
+This page walks every layer in build order, and for each gives *why it is useful*
+and *where it comes from*. For the raw node and edge vocabulary see
+[Graph model](/concepts/graph-model); for the static-versus-measured split see
+[Why a semantic graph](/concepts/why-semantic) and
+[Why a runtime graph](/concepts/why-runtime).
+
+| Layer | Edges | Built by |
+| --- | --- | --- |
+| [Structural](#structural-layer) | `CONTAINS`, `IMPORTS`, `EXPORTS` | `extract` (always) |
+| [Type](#type-layer) | `EXTENDS`, `IMPLEMENTS`, `USES_TYPE`, `RETURNS`, `PARAM_TYPE` | `extract --semantic` |
+| [Behavioral](#behavioral-layer) | `CALLS`, `INSTANTIATES`, `OVERRIDES`, `READS`, `WRITES` | `extract --semantic` |
+| [System-level](#system-level-layer) | `READS_CONFIG`, `CALLS_EXTERNAL`, `HANDLES` | `extract` (endpoints need `--semantic`) |
+| [Runtime](#runtime-layer) | `CALLS_RUNTIME` | `enrich` (from a CPU profile) |
+
+## Structural layer
+
+**What it is.** The skeleton: which modules exist, what each declaration contains
+(`CONTAINS`), and how modules wire together through `IMPORTS` and `EXPORTS`. Its
+nodes are every declaration the parser sees — `Module`, `Class`, `Interface`,
+`TypeAlias`, `Enum`, `Function`, `Method`, `Property`, `Variable`, and the
+`ExternalModule` stubs that imports point at.
+
+**Why it is useful.** It is the map of *what exists and what owns what* — the frame
+every other layer hangs its edges on. On its own it already answers purely
+structural questions: what a module exports, what a class contains, what imports
+what.
+
+**Where it comes from.** Read directly from the source syntax tree, with **no
+symbol resolution**, so it is cheap and **always emitted** — you get it even
+without `--semantic`. The trade-off is that a structural-only graph has no `CALLS`,
+no type edges, and no usable [`dead-exports`](/commands/dead-exports).
+
+## Type layer
+
+**What it is.** The type relationships the compiler resolves between declarations:
+class and interface heritage (`EXTENDS`, `IMPLEMENTS`) and the three edges that
+record where a type is *used* — `USES_TYPE`, `RETURNS`, `PARAM_TYPE`.
+
+**Why it is useful.** It answers type-level blast radius: *if I change this type,
+which signatures and other types must change with it?* A `PARAM_TYPE` edge is a
+function whose parameter is that type, a `RETURNS` edge a function that returns it,
+a `USES_TYPE` edge another type built on it. [`references`](/commands/references)
+reports exactly this set — impact that [`blast-radius`](/commands/blast-radius),
+which follows `CALLS` only, cannot see.
+
+**Where it comes from.** The TypeScript type checker, through
+[`ts-morph`](https://ts-morph.com). Resolving an identifier to the declaration it
+refers to is the expensive half of extraction, so this layer is emitted **only
+with `--semantic`**.
+
+## Behavioral layer
+
+**What it is.** What the code *does* to other symbols at the value level: `CALLS`
+(one function invokes another), `INSTANTIATES` (`new C()`), `OVERRIDES` (a method
+overriding a base method), and the property-access pair `READS` / `WRITES`.
+
+**Why it is useful.** This is the layer most static-analysis questions run on.
+`CALLS` is what [`who-calls`](/commands/who-calls) and
+[`blast-radius`](/commands/blast-radius) walk backwards to find everything a change
+could affect; together with the type edges it forms the
+[reference set](/concepts/graph-model#what-counts-as-a-reference) that makes
+[`dead-exports`](/commands/dead-exports)' "zero references" mean "safe to delete."
+(`WRITES` is a mutation, not a use, so it is deliberately *excluded* from that set
+— being assigned to is not a reference.)
+
+**Where it comes from.** Each call, construction, and access site is resolved to
+the **exact** declaration it targets — across files and through import aliases — by
+ts-morph, not by name matching. Like the type layer it is the expensive,
+resolution-dependent half, emitted **only with `--semantic`**.
+
+## System-level layer
+
+**What it is.** The system's edges with the world outside its own functions:
+`ConfigFlag` nodes for the environment variables it reads (`READS_CONFIG`),
+`ExternalAPI` nodes for the outbound HTTP hosts it calls (`CALLS_EXTERNAL`), and
+`Endpoint` nodes for the HTTP routes it serves, each joined to its handler by a
+`HANDLES` edge.
+
+**Why it is useful.** It surfaces a service's real boundary at a glance — every
+feature flag and environment variable it depends on, every third-party host it
+reaches, every route it exposes — without reading the code. These are the
+system-level kinds tracked in
+[#31](https://github.com/jeromeetienne/ts_knowledge_graph/issues/31).
+
+**Where it comes from.** Pattern detection over the source: `process.env.X` reads
+become `ConfigFlag`s, `fetch(...)` call sites become one `ExternalAPI` per host,
+and route registrations like `app.get('/users', handler)` become `Endpoint`s. The
+config and outbound-HTTP surfaces need no symbol resolution and are **always on**;
+the HTTP **endpoints** require `--semantic`.
+
+## Runtime layer
+
+**What it is.** The call graph **as it actually ran**: `CALLS_RUNTIME` edges
+reconstructed from a profile's call tree, plus measured `metadata.runtime` (self
+time and sample counts) attached to the nodes that were on the stack.
+
+**Why it is useful.** Every other layer describes what the code *can* do; this one
+records what it *did*. It captures calls made through dynamic dispatch and
+callbacks that the static `CALLS` layer cannot resolve, and it tells you **where
+the time actually went**, so the optimization agent can target the hottest code
+instead of guessing. It is also the dynamic half that [`cost`](/commands/cost)
+propagates into inclusive cost and that [`cluster`](/commands/cluster) fuses with
+the static graph.
+
+**Where it comes from.** Not parsed from source at all — reconstructed by
+[`enrich`](/commands/enrich) from a **V8 CPU profile** (the `.cpuprofile` any Node
+process emits under `node --cpu-prof`). Because it is a *sampling* profile its
+coverage is honest, not total: startup, dependencies, and inlined leaf functions
+map to no in-project node, and `enrich` reports that gap rather than hiding it. See
+[Why a runtime graph](/concepts/why-runtime) for what this buys and its caveats.
+
+## See also
+
+- [Graph model](/concepts/graph-model) — the full node and edge vocabulary, and
+  the precise [reference set](/concepts/graph-model#what-counts-as-a-reference).
+- [Why a semantic graph](/concepts/why-semantic) — why the type and behavioral
+  layers need `--semantic`.
+- [Why a runtime graph](/concepts/why-runtime) — what the runtime layer adds over a
+  purely static model.
+- [`extract`](/commands/extract) / [`enrich`](/commands/enrich) — the commands that
+  build these layers.

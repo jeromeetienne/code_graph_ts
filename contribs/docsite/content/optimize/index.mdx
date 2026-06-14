@@ -1,0 +1,184 @@
+---
+title: Optimize Your Code
+---
+
+# Optimize your code
+
+This guide is the **measured-optimization loop**: use the graph to find where a
+codebase actually spends its time, change one thing, and prove — with a hard gate,
+not a hunch — that the change is safe and that it helped. It is the counterpart to
+the [Static Analysis guide](/static-analysis): that one answers *structural*
+questions by hand; this one closes the loop from *measurement* to a *verified
+edit*.
+
+The same loop drives the [`/code-graph-optimize`](/agent/slash-commands) agent.
+Whether you run it yourself or hand it to the agent, the shape is identical:
+
+```
+enrich ─▶ hotspots / cost ─▶ (scope) ─▶ edit ─▶ verify ─▶ benchmark ─▶ report
+  │           │                            │       │          │
+measure   find leverage              one change   gate      prove impact
+```
+
+Two rules hold the loop honest:
+
+- **`verify` is the gate, not the benchmark.** The type-check + test result decides
+  keep-or-revert. A benchmark delta is *advisory* — a noisy median that can suggest
+  but never authorise a change.
+- **Measure before you cut.** Without a profile the graph can show you *structure*
+  (what is central) but not *cost* (what is hot). Enrich first, or you are guessing.
+
+## Setup: build, then enrich
+
+Optimization needs a graph that carries runtime weight. Build it
+([Getting Started](/getting-started/pipeline) has the full walk-through), then
+attach a profile.
+
+```bash
+# 1. build the semantic graph
+npx ts-knowledge-graph extract . --semantic
+npx ts-knowledge-graph load
+
+# 2. record a V8 CPU profile while the code runs a representative workload
+node --cpu-prof --cpu-prof-dir ./.ts_knowledge_graph/prof ./run-workload.js
+
+# 3. attach the measured self-time onto graph nodes (metadata.runtime)
+npx ts-knowledge-graph enrich ./.ts_knowledge_graph/prof/*.cpuprofile --root .
+```
+
+`enrich` joins each profiled frame to the declaration it belongs to and reports
+the **coverage** — the fraction of profiled time that landed on a graph node.
+Low coverage (most time in dependencies or native code) means the in-project
+rankings below describe only a slice of the real cost; `enrich` says so plainly.
+
+> The sample projects wire this together: `npm run project01:enrich` runs a
+> profile-and-enrich script for you, and `npm run project01:tour` walks the whole
+> loop end to end.
+
+## 1. Find the leverage
+
+**Question:** of everything in this codebase, what is worth optimizing?
+
+Rank by measured self-time — the time spent *in a node itself*, the only thing a
+local rewrite can remove:
+
+```bash
+npx ts-knowledge-graph hotspots --by self-time
+```
+
+```
+ 1.       142 ms  Method     titleCase        src/text/string_utils.ts:48
+ 2.        91 ms  Function   normalizeWhitespace  src/text/string_utils.ts:12
+ …
+```
+
+[`hotspots`](/commands/hotspots) ranks leverage; without a profile it falls back
+to `--by callers` (static fan-in) and tells you so. The other metrics —
+`call-count`, `blast-radius` — surface different kinds of leverage.
+
+Self-time tells you *where the time is spent*; [`cost`](/commands/cost) tells you
+*who is responsible for it*. Inclusive cost is a node's self-time plus everything
+it transitively calls, so a cheap-looking function that calls an expensive one
+still ranks high:
+
+```bash
+npx ts-knowledge-graph cost                 # rank the whole graph by inclusive cost
+npx ts-knowledge-graph cost "$ID"           # break one node into callee/caller attribution
+```
+
+The attribution view is the one to read before editing: it shows how much of a
+node's cost flows into each callee (where to cut) and how much each caller is
+responsible for (who feels the change).
+
+## 2. Scope a real target (optional)
+
+**Question:** I have a vague wish ("make it faster") — what is the concrete,
+measurable task?
+
+The read-only [`/code-graph-interview`](/agent/slash-commands) command turns a
+dimension (latency, memory, cost, bundle size…) into a baseline-and-target task
+grounded in real node ids, and hands it back to you. Use it when the goal is fuzzy;
+skip it when you already know the symbol.
+
+## 3. Make exactly one edit
+
+Change one thing — by hand, or let [`/code-graph-optimize`](/agent/slash-commands)
+apply a single verified-safe edit. Before you touch a hot symbol, confirm its
+blast radius the static way ([`references`](/commands/references),
+[`who-calls`](/commands/who-calls), [`blast-radius`](/commands/blast-radius)) so
+you know exactly what a behaviour-preserving change must keep intact.
+
+Keep the edit small and behaviour-preserving. The smaller the blast radius, the
+cheaper the next step is to trust.
+
+## 4. Gate it with `verify`
+
+**Question:** did the edit keep the code correct?
+
+```bash
+npx ts-knowledge-graph verify --cwd .
+```
+
+[`verify`](/commands/verify) runs the project's `typecheck` and `test` scripts and
+returns **one** keep/revert verdict. `ok: true` → the edit stands; `ok: false` →
+revert it (`git restore <file>`) and try another. When there is no test script it
+degrades to type-check-only and reports that honestly — a type-check-only pass is
+**not** a behaviour guarantee. This is the hard gate; nothing below overrides it.
+
+## 5. Confirm the impact with `benchmark`
+
+**Question:** did the edit actually make it faster?
+
+```bash
+npx ts-knowledge-graph benchmark titleCase \
+  --workload ./bench/title_case_workload.ts --runs 5
+```
+
+[`benchmark`](/commands/benchmark) profiles the target over N runs and reports the
+**median + spread**. Save a baseline before the edit and compare after:
+
+```bash
+# before the edit
+npx ts-knowledge-graph benchmark titleCase --workload … --save-baseline
+# after the edit
+npx ts-knowledge-graph benchmark titleCase --workload … --baseline
+#   Δ vs baseline  -57 ms  (-40.1%)  improved
+```
+
+Read the delta against the spread: a change smaller than the run-to-run spread is
+noise, not a result. The benchmark is **advisory** — it informs you, it never
+overrides the `verify` verdict from step 4.
+
+## 6. Snapshot with `report`
+
+Close the loop with a shareable record of where things stand:
+
+```bash
+npx ts-knowledge-graph report
+```
+
+[`report`](/commands/report) writes a `CODEBASE_BRIEF` whose Runtime section now
+reflects your enriched, post-edit graph — a before/after you can diff or hand off.
+
+## What this loop can and cannot promise
+
+- **`verify` proves safety only as far as the tests reach.** A green gate on a
+  thin suite is a weak guarantee; the loop reports type-check-only passes as *not*
+  behaviourally verified rather than dressing them up.
+- **`benchmark` is a measurement, not a promise.** Medians drift with machine load.
+  Treat a sub-spread delta as "no measurable change", and prefer a workload that
+  mirrors production.
+- **The graph sees static cost structure, profiles see dynamic cost.** Hotspots and
+  cost are only as representative as the workload you profiled — enrich with a
+  realistic one, and watch the coverage number.
+
+## See also
+
+- [`hotspots`](/commands/hotspots) · [`cost`](/commands/cost) ·
+  [`enrich`](/commands/enrich) · [`benchmark`](/commands/benchmark) ·
+  [`verify`](/commands/verify) · [`report`](/commands/report) — the commands this
+  loop chains.
+- [Agent](/agent/slash-commands) — `/code-graph-optimize` runs this loop
+  autonomously; `/code-graph-interview` scopes the target.
+- [Static Analysis](/static-analysis) — the structural, drive-by-hand counterpart.
+- [Browse the Graph](/explore) — get oriented before you optimize.

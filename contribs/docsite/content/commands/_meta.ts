@@ -6,6 +6,12 @@ export default {
 	},
 	extract: 'extract',
 	load: 'load',
+	'-- enrich': {
+		type: 'separator',
+		title: 'Enrich the graph',
+	},
+	enrich: 'enrich',
+	cluster: 'cluster',
 	'-- query': {
 		type: 'separator',
 		title: 'Query the graph',
@@ -19,12 +25,10 @@ export default {
 	'dead-exports': 'dead-exports',
 	hotspots: 'hotspots',
 	cost: 'cost',
-	'-- profile': {
+	'-- verify': {
 		type: 'separator',
-		title: 'Profile & verify',
+		title: 'Verify & measure an edit',
 	},
-	enrich: 'enrich',
-	cluster: 'cluster',
 	verify: 'verify',
 	benchmark: 'benchmark',
 	'-- use': {
@@ -32,4 +36,6 @@ export default {
 		title: 'Use the graph',
 	},
 	webview: 'webview',
+	report: 'report',
+	install: 'install',
 };

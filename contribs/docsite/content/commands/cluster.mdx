@@ -122,8 +122,9 @@ npx ts-knowledge-graph find titleCase --json
 npx ts-knowledge-graph neighbors '<id>' --json   # the community of each neighbour
 ```
 
-Coloring the [`webview`](/commands/webview) visualisation by community is planned
-([#54](https://github.com/jeromeetienne/ts_knowledge_graph/issues/54)).
+The [`webview`](/commands/webview) visualisation can colour nodes by community —
+its **Colour by → community** mode reads this `metadata.community` and draws a
+community legend, so a clustered graph shows its module decomposition at a glance.
 
 **Try it on a sample project:**
 
@@ -157,5 +158,5 @@ npm run project01:cluster   # detect communities and attach metadata.community
   `metadata.runtime`, the runtime counterpart to this structural pass.
 - [`extract`](/commands/extract) — run with `--semantic` so the `CALLS` / type
   edges `cluster` weights exist.
-- [`webview`](/commands/webview) — serve the graph; community coloring is planned
-  ([#54](https://github.com/jeromeetienne/ts_knowledge_graph/issues/54)).
+- [`webview`](/commands/webview) — serve the graph; its **Colour by → community**
+  mode visualises this clustering.

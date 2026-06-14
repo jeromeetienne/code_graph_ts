@@ -1,0 +1,124 @@
+---
+title: report
+---
+
+# `report`
+
+Generate a **`CODEBASE_BRIEF`** — one shareable snapshot of the whole graph:
+structure, impact, runtime, and the system boundary, in a single document. Where
+the query commands answer one question at a time, `report` rolls the most useful
+rankings into a page you can read top to bottom or hand to someone else. It is the
+natural closing step of a session (and of the `project0N` [tour
+scripts](https://github.com/jeromeetienne/ts_knowledge_graph/tree/main/scripts)).
+
+Source: [`src/commands/report_command.ts`](https://github.com/jeromeetienne/ts_knowledge_graph/blob/main/src/commands/report_command.ts) ·
+renderer: `GraphReport` in
+[`src/report/graph_report.ts`](https://github.com/jeromeetienne/ts_knowledge_graph/blob/main/src/report/graph_report.ts) ·
+data: `ReportData` in
+[`src/report/report_data.ts`](https://github.com/jeromeetienne/ts_knowledge_graph/blob/main/src/report/report_data.ts)
+
+## Synopsis
+
+```bash
+npx ts-knowledge-graph report [options]
+```
+
+## Arguments
+
+None. The command summarises the whole loaded graph.
+
+## Options
+
+| Option | Default | Description |
+| --- | --- | --- |
+| `-o, --output-folder <dir>` | `./.ts_knowledge_graph` | Output folder; the Kùzu database is read from `<dir>/graph.kuzu`. |
+| `--format <format>` | `markdown` | Output format: `markdown`, `json`, or `pdf`. |
+| `--output <file>` | `<output-folder>/CODEBASE_BRIEF.<ext>` | Destination file. The extension follows the format (`.md` / `.json` / `.pdf`). |
+| `--limit <n>` | `10` | Maximum rows per ranking (hubs, hotspots, communities…). Clamped to `1`–`100`. |
+| `--stdout` | `false` | Write to stdout instead of a file. `markdown` / `json` only. |
+
+## What it does
+
+1. **Checks the database exists.** If `<output-folder>/graph.kuzu` is missing it
+   prints `database not found … — run extract then load first`, sets exit code
+   `1`, and returns.
+2. **Gathers the report data** by running the same query surface the CLI exposes
+   — `hotspots` (by callers, by blast radius, and by self-time), `cost`,
+   `deadExports`, the strong-cycle finder, and the community/boundary scans — into
+   one format-agnostic `GraphReportData`.
+3. **Renders the chosen format.** `markdown` and `json` come straight from the
+   pure renderer; `pdf` renders the visual HTML layout and converts it through an
+   optional engine (see [PDF](#pdf-output)).
+4. **Writes the file** (or stdout). The default path is
+   `<output-folder>/CODEBASE_BRIEF.<ext>`.
+
+## The brief
+
+The markdown brief is organised as a single readable page. Runtime sections are
+populated only when the graph has been [`enrich`](/commands/enrich)ed; on a
+static graph they state that plainly rather than inventing numbers.
+
+| Section | What it shows |
+| --- | --- |
+| **Snapshot** | A one-line verdict and the totals: symbols, files, relationships, communities, dead exports, cycles. |
+| **Composition** | The node-kind and edge-kind breakdown — the shape of the graph. |
+| **Load-bearing code** | The structural hubs: highest fan-in (`hotspots --by callers`) and largest blast radius. |
+| **Communities** | The modules [`cluster`](/commands/cluster) found, with CPM quality. |
+| **Runtime** | *(enriched only)* hotspots by measured self-time and where inclusive [`cost`](/commands/cost) concentrates. |
+| **Structure vs. runtime** | *(enriched only)* orchestrators (carry cost, spend little), hidden hotspots (hot, few callers), and the aligned core. |
+| **Cycles** | Strongly-connected call cycles — refactoring friction. |
+| **System boundary** | Where the code meets the outside world: `Endpoint`s handled, `ConfigFlag`s read, `ExternalAPI`s called. |
+| **Cleanup candidates** | The [`dead-exports`](/commands/dead-exports) list. |
+| **Where to go next** | Suggested follow-up commands, pre-filled with this `--output-folder`. |
+
+### PDF output
+
+`--format pdf` renders the visual HTML layout and converts it with an optional
+engine. When no engine is installed it does **not** fail: it writes the HTML next
+to the requested path (`CODEBASE_BRIEF.html`) and tells you to open it and print
+to PDF, or install the engine for direct output. `--stdout` is not supported for
+`pdf`.
+
+## Output
+
+```
+✓ wrote ./.ts_knowledge_graph/CODEBASE_BRIEF.md
+```
+
+`json` (`--format json`) emits the full `GraphReportData` — the same numbers the
+markdown renders, for feeding into another tool.
+
+## Examples
+
+```bash
+# write the default markdown brief to ./.ts_knowledge_graph/CODEBASE_BRIEF.md
+npx ts-knowledge-graph report
+
+# print the brief to the terminal
+npx ts-knowledge-graph report --stdout
+
+# machine-readable, to a custom path
+npx ts-knowledge-graph report --format json --output brief.json
+
+# a PDF (or an HTML fallback if no PDF engine is installed)
+npx ts-knowledge-graph report --format pdf
+```
+
+## Notes and caveats
+
+- **Enrich first for the runtime sections.** Without [`enrich`](/commands/enrich)
+  the Runtime and Structure-vs-runtime sections are empty by design — the graph
+  carries no measured cost to report.
+- **A snapshot, not a live view.** The brief reflects the graph at the moment you
+  ran it. Re-extract, reload, and re-run after code changes.
+- **`--limit` trims every ranking** uniformly; raise it (up to `100`) for a
+  fuller brief, lower it for a one-screen summary.
+
+## See also
+
+- [`hotspots`](/commands/hotspots) · [`cost`](/commands/cost) ·
+  [`dead-exports`](/commands/dead-exports) — the rankings the brief collects.
+- [`cluster`](/commands/cluster) — populates the Communities section.
+- [`enrich`](/commands/enrich) — unlocks the Runtime sections.
+- [Optimize your code](/optimize) — the brief as the closing step of the
+  measured-optimization loop.

@@ -12,25 +12,49 @@ commands above as their tools:
 - **`/code-graph-interview`** — read-only; interviews you to scope a measurable
   optimization target and grounds each candidate in the graph.
 
-Because the agent runtime is Claude Code itself, there is **no API key, provider,
-or `.env`** to configure. Both commands, plus the `code-graph-query` skill, live
-under
-[`dotclaude_folder/`](https://github.com/jeromeetienne/ts_knowledge_graph/tree/main/dotclaude_folder)
-and are mirrored into `.claude/`.
+Because the agent runtime is Claude Code itself, there is **nothing to configure**
+beyond installing the commands and pointing them at a graph — the model, the API
+key, and the provider all come from Claude Code, as the next section explains.
+
+## Configuration with Claude
+
+The agent has **no configuration of its own** — no model selection, API key,
+provider, or `.env` file. That falls out of where it runs: the runtime *is*
+[Claude Code](https://claude.com/claude-code). Claude Code supplies the model and
+the tool-calling loop; the two slash commands and the `code-graph-query` skill only
+tell it *what* to do and *which* graph queries to reach for. There is no separate
+agent process to host and no provider to point at.
+
+So "configuring" the agent comes down to two things — making those instructions
+visible to Claude Code, and giving them a graph to query:
+
+- **The command and skill files** must live in the project's `.claude/`. They are
+  authored under
+  [`dotclaude_folder/`](https://github.com/jeromeetienne/ts_knowledge_graph/tree/main/dotclaude_folder)
+  and mirrored into `.claude/` — the two commands under `.claude/commands/`, the
+  `code-graph-query` skill under `.claude/skills/`. The
+  [next section](#installing-the-commands) covers installing them.
+- **A loaded graph** must exist at the default database
+  `./.ts_knowledge_graph/graph.kuzu`. If it does not, both commands build it first
+  with `npx ts-knowledge-graph extract . --semantic` followed by
+  `npx ts-knowledge-graph load`. The `--semantic` flag is required: the agent
+  relies on the caller and heritage edges that only a semantic extraction emits.
 
 ## Installing the commands
 
 The commands are already committed in this repository's `.claude/`. For another
-project, mirror them in: run `npm run symlink:dotclaude`, or copy the files under
-`dotclaude_folder/` into that project's `.claude/`. If Claude Code reports
-*"`/code-graph-optimize` is not a known command,"* the files have not been
-mirrored.
+project, install them with one command from that project's root:
 
-Both commands assume a loaded graph at the default database `./.ts_knowledge_graph/graph.kuzu`.
-If it does not exist, they build it first with
-`npx ts-knowledge-graph extract . --semantic` followed by
-`npx ts-knowledge-graph load` (the `--semantic` flag is required for the caller
-and heritage edges).
+```bash
+npx ts-knowledge-graph install
+```
+
+This copies both slash commands and the `code-graph-query` skill into the
+project's `.claude/` — see [`install`](/commands/install) (pass `--force` to
+refresh existing copies). Inside this repository's own checkout you can instead
+run `npm run symlink:dotclaude`, or copy the files under `dotclaude_folder/` by
+hand. If Claude Code reports *"`/code-graph-optimize` is not a known command,"* the
+files have not been installed.
 
 ## `/code-graph-optimize`
 
@@ -137,6 +161,32 @@ and coupling. The command ends by telling you to run
 
 Full definition:
 [`dotclaude_folder/commands/code-graph-interview.md`](https://github.com/jeromeetienne/ts_knowledge_graph/blob/main/dotclaude_folder/commands/code-graph-interview.md).
+
+## The `code-graph-query` skill
+
+Alongside the two commands, [`install`](/commands/install) ships a **skill**,
+`code-graph-query`. Where the commands are *missions* (optimize, interview), the
+skill is a *reflex*: it tells the agent to reach for the graph — not `grep` /
+`glob` — whenever a question is about code structure or impact, and which command
+answers it.
+
+| Question | Command |
+| --- | --- |
+| Who calls this function? | [`who-calls`](/commands/who-calls) |
+| What does this function call? | [`calls`](/commands/calls) |
+| What breaks if I change this? | [`blast-radius`](/commands/blast-radius) |
+| What uses this symbol or type? | [`references`](/commands/references) |
+| Which exports are unused? | [`dead-exports`](/commands/dead-exports) |
+| What is this connected to? | [`neighbors`](/commands/neighbors) |
+
+It also encodes the two ground rules every query here follows: resolve a name to a
+node id with [`find --json`](/commands/find) first (never hand-write ids), and
+consume the `--json` output rather than the human-readable table. So an agent in
+any session — not only a `/code-graph-*` run — uses the graph as its eyes for
+impact and dependency questions.
+
+Full definition:
+[`dotclaude_folder/skills/code-graph-query/SKILL.md`](https://github.com/jeromeetienne/ts_knowledge_graph/blob/main/dotclaude_folder/skills/code-graph-query/SKILL.md).
 
 ## See also
 

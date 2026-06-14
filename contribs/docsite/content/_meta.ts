@@ -4,5 +4,7 @@ export default {
 	agent: 'Agent',
 	concepts: 'Concepts',
 	'static-analysis': 'Static Analysis',
+	explore: 'Browse the Graph',
+	optimize: 'Optimize Your Code',
 	commands: 'Command Reference',
 };

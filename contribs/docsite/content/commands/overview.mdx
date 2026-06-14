@@ -20,14 +20,15 @@ npx ts-knowledge-graph <command> [arguments] [options]
 
 ## The pipeline
 
-The commands fall into three groups that run in order. Each stage produces an
+The commands fall into groups that run roughly in order — each stage produces an
 artifact the next stage consumes:
 
 ```
-TypeScript project ──extract──▶ JSONL graph ──load──▶ Kùzu database ──▶ query / web
+TypeScript project ──extract──▶ JSONL graph ──load──▶ Kùzu database ──▶ query / webview / report
                                 (./.ts_knowledge_graph/graph/)            (./.ts_knowledge_graph/graph.kuzu)
                                                                     ▲
                                           V8 .cpuprofile ──enrich──┘
+                                (enrich and cluster annotate the database in place)
 ```
 
 ### Build the graph
@@ -70,6 +71,8 @@ TypeScript project ──extract──▶ JSONL graph ──load──▶ Kùzu 
 | Command | Purpose |
 | --- | --- |
 | [`webview`](/commands/webview) | Serve the graph in an interactive web visualisation. |
+| [`report`](/commands/report) | Write a `CODEBASE_BRIEF` — one snapshot of structure, impact, runtime, and boundary (markdown / JSON / PDF). |
+| [`install`](/commands/install) | Install the agent's slash commands and `code-graph-query` skill into a project's `.claude/`. |
 
 The autonomous optimization agent is not a CLI command. It is the
 `/code-graph-optimize` [Claude Code](https://claude.com/claude-code) slash

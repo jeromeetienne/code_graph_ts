@@ -13,7 +13,7 @@ start with [Install](/getting-started/install).
 The pipeline has three stages, each producing an artifact the next one consumes:
 
 ```
-TypeScript project ──extract──▶ JSONL graph ──load──▶ Kùzu database ──▶ queries / agent
+TypeScript project ──extract──▶ JSONL graph ──load──▶ Kùzu database ──▶ queries / webview / report / agent
                                 (./.ts_knowledge_graph/graph/)            (./.ts_knowledge_graph/graph.kuzu)
 ```
 
@@ -125,9 +125,9 @@ depth, the [Command Reference](/commands/overview).
 The agent ships as a [Claude Code](https://claude.com/claude-code) slash
 command, `/code-graph-optimize` (see [Agent](/agent/slash-commands)). There is no
 provider, API key, or `.env` to configure — the agent runtime is Claude Code
-itself. The commands are mirrored into `.claude/` (already committed in this
-repository; for another project, run `npm run symlink:dotclaude` or copy the
-files under `dotclaude_folder/` into that project's `.claude/`).
+itself. The commands are committed in this repository's `.claude/`; for another
+project, install them with `npx ts-knowledge-graph install` (see
+[`install`](/commands/install)).
 
 **Start from a clean git tree** — the agent edits files, and `git diff` is how
 you review what it did. Then, inside Claude Code:
@@ -165,7 +165,7 @@ producing tasks you can then hand to `/code-graph-optimize`.
 
 | Symptom | Cause / fix |
 |---|---|
-| `/code-graph-optimize` is not a known command | The commands are not mirrored into `.claude/`. Run `npm run symlink:dotclaude`, or copy the files under `dotclaude_folder/` into the project's `.claude/`. |
+| `/code-graph-optimize` is not a known command | The commands are not installed into `.claude/`. Run `npx ts-knowledge-graph install` (or, inside this repo, `npm run symlink:dotclaude`). |
 | Query returns `(no results)` for an id you typed | Ids encode the declaration line (`…@50`) and shift when code changes. Re-run `find` to get the current id — never reuse ids across extractions. |
 | `dead-exports` lists a symbol you believe is used | Re-extract + reload first (stale graph). If it persists, check whether the use is dynamic (string-keyed access, reflection) — the graph only sees static references. |
 | Kùzu errors about the database directory | Another process may hold the db open, or the db is from an incompatible Kùzu version. `rm -rf .ts_knowledge_graph/graph.kuzu` and reload. |
@@ -173,10 +173,19 @@ producing tasks you can then hand to `/code-graph-optimize`.
 
 ## Where to go next
 
+- [Browse the Graph](/explore) — use the interactive visualisation to get
+  oriented in an unfamiliar codebase.
 - [Static Analysis guide](/static-analysis) — use the query commands by hand
   to answer impact, dead-code, and dependency questions about a codebase.
+- [Optimize Your Code](/optimize) — the measured loop: profile, find the
+  leverage, edit, verify, and benchmark the impact.
 - [Concepts](/concepts/graph-model) — the graph model and why a semantic graph.
 - [Command Reference](/commands/overview) — every command's arguments, options,
   and underlying query.
 - [Agent](/agent/slash-commands) — the optimization agent's find → confirm →
   edit → verify → revert method.
+
+> **Try the whole pipeline on a sample project.** This repository ships four
+> guided tours that run nearly every command end to end (extract → load → …
+> → enrich → hotspots → cost → verify → benchmark → report):
+> `npm run project01:tour` (and `project02:tour` … `project04:tour`).

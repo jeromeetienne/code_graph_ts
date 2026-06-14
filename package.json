@@ -1,6 +1,6 @@
 {
 	"name": "ts-knowledge-graph",
-	"version": "0.1.4",
+	"version": "0.1.6",
 	"description": "Parse TypeScript source into a knowledge graph for autonomous code optimization",
 	"type": "module",
 	"bin": {
@@ -14,7 +14,7 @@
 		"LICENSE"
 	],
 	"engines": {
-		"node": ">=18"
+		"node": ">=20.12"
 	},
 	"publishConfig": {
 		"access": "public"
