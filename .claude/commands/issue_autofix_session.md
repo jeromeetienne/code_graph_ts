@@ -14,8 +14,10 @@ merges the ones they want; each PR's `Fixes #N` closes its issue on merge. To
 reject one, the maintainer closes its PR — nothing else is affected, because no
 two open autofix PRs touch the same file.
 
-Use the `gh` CLI for every GitHub interaction. Act autonomously — do not ask the
-user questions mid-run.
+Use the `gh` CLI for every GitHub interaction. Act fully autonomously. **Never
+ask the user a question — not at the start, mid-run, or end.** If an issue is too
+ambiguous to fix with confidence, it is recorded as failed and skipped, never
+raised with the user.
 
 ## Step 1 — Preconditions
 
@@ -75,4 +77,5 @@ issue on merge.
 - Stay on `main` between issues; `/issue_autofix` creates and cleans up its own
   per-issue branches.
 - Never merge and never close issues — the maintainer does both.
-- Do not ask the user questions mid-run; act autonomously.
+- Never ask the user a question — not at the start, mid-run, or end. Act fully
+  autonomously; an ambiguous issue is recorded as failed, never raised.
