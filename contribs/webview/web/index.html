@@ -42,7 +42,7 @@
 		</div>
 
 		<section id="runtime" class="empty">
-			<h2 class="foldable" data-fold="runtime">Runtime</h2>
+			<h2 class="foldable" data-fold="runtime" data-help="Self-time measured from a CPU profile, loaded with the enrich command: profile coverage, a heat scale, and a filter for only-measured nodes. Pick self-time (heat) under Colour by to shade the graph.">Runtime</h2>
 			<div id="coverage">no runtime data</div>
 			<label class="row"><input id="only-measured" type="checkbox"> only measured nodes</label>
 			<div class="heat-legend">
@@ -51,27 +51,27 @@
 				<span class="heat-max">hot</span>
 			</div>
 			<div class="heat-note"><span class="heat-swatch unmeasured"></span> not measured</div>
-			<h3 class="hotspots-title foldable" data-fold="hotspots">Hotspots</h3>
+			<h3 class="hotspots-title foldable" data-fold="hotspots" data-help="The functions with the most measured self-time, hottest first. Click one to centre and select it in the graph.">Hotspots</h3>
 			<div id="hotspots"></div>
 		</section>
 
 		<section>
-			<h2 class="foldable" data-fold="node-kinds">Node kinds</h2>
+			<h2 class="foldable" data-fold="node-kinds" data-help="Every kind of declaration in the graph, such as Module, Class, Function and TypeAlias. Toggle a kind to show or hide its nodes; the number is how many there are.">Node kinds</h2>
 			<div id="node-kinds" class="legend"></div>
 		</section>
 
 		<section>
-			<h2 class="foldable" data-fold="edge-kinds">Edge kinds</h2>
+			<h2 class="foldable" data-fold="edge-kinds" data-help="Every kind of relationship between nodes, such as CALLS, USES_TYPE and EXTENDS. Toggle a kind to show or hide its edges; the number is how many there are.">Edge kinds</h2>
 			<div id="edge-kinds" class="legend"></div>
 		</section>
 
 		<section id="communities" class="empty">
-			<h2 class="foldable" data-fold="communities">Communities</h2>
+			<h2 class="foldable" data-fold="communities" data-help="Clusters found by community detection, via the cluster command. Toggle a community to show or hide its nodes, or pick community under Colour by to shade the graph by cluster.">Communities</h2>
 			<div id="community-legend" class="legend"></div>
 		</section>
 
 		<section>
-			<h2 class="foldable" data-fold="options">Options</h2>
+			<h2 class="foldable" data-fold="options" data-help="Display options: hide isolated (unconnected) nodes, and choose or re-run the graph layout algorithm.">Options</h2>
 			<label class="row"><input id="hide-isolated" type="checkbox"> hide isolated nodes</label>
 			<div class="row">
 				<select id="layout-select">
@@ -87,7 +87,7 @@
 		</section>
 
 		<section id="details" class="empty">
-			<h2 class="foldable" data-fold="selection">Selection</h2>
+			<h2 class="foldable" data-fold="selection" data-help="Details of the node you click in the graph: its kind, file, neighbours by edge kind, and any runtime metrics.">Selection</h2>
 			<div id="details-body">click a node</div>
 		</section>
 	</aside>

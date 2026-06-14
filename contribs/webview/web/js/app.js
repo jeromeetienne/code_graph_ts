@@ -150,6 +150,7 @@ const asSelect = (target) => {
 function boot() {
 	setupDropzone();
 	setupFolds();
+	setupSectionHelp();
 	setupTheme();
 	el('hide-isolated').addEventListener('change', (event) => {
 		state.hideIsolated = asInput(event.target).checked;
@@ -293,6 +294,24 @@ function setupFolds() {
 			folds[key] = header.classList.toggle('collapsed');
 			saveFolds(folds);
 		});
+	}
+}
+
+/**
+ * Appends a `?` help badge to every foldable sidebar header that carries a
+ * `data-help` description, reusing the same badge and shared tooltip as the
+ * legends. The badge swallows its own clicks, so opening a section's help never
+ * toggles its fold.
+ */
+function setupSectionHelp() {
+	for (const rawHeader of document.querySelectorAll('#sidebar .foldable[data-help]')) {
+		const header = /** @type {HTMLElement} */ (rawHeader);
+		const description = header.dataset.help;
+		if (description === undefined || description.length === 0) {
+			continue;
+		}
+		const label = header.textContent?.trim() ?? '';
+		header.appendChild(makeHelpBadge(label, description));
 	}
 }
 

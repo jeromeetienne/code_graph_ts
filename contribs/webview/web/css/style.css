@@ -173,7 +173,7 @@ body { display: flex; }
 	flex: none;
 }
 .legend .count { margin-left: auto; color: var(--muted); font-size: 11px; }
-.legend .help-badge {
+.help-badge {
 	flex: none;
 	width: 13px;
 	height: 13px;
@@ -183,12 +183,15 @@ body { display: flex; }
 	font-size: 9px;
 	font-weight: 600;
 	line-height: 11px;
+	letter-spacing: normal;
 	text-align: center;
+	text-transform: none;
 	user-select: none;
+	cursor: help;
 	opacity: 0.5;
 }
-.legend .help-badge:hover,
-.legend .help-badge:focus {
+.help-badge:hover,
+.help-badge:focus {
 	background: var(--surface-hover);
 	color: var(--text-on-control);
 	border-color: var(--muted);
