@@ -2,6 +2,13 @@
 	"version": "0.0.1",
 	"configurations": [
 		{
+			"name": "web-preview",
+			"runtimeExecutable": "npx",
+			"runtimeArgs": ["-y", "serve", "contribs/webview/web"],
+			"autoPort": true,
+			"port": 4174
+		},
+		{
 			"name": "web",
 			"runtimeExecutable": "npm",
 			"runtimeArgs": ["run", "web"],
