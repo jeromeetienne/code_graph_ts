@@ -1,0 +1,99 @@
+---
+title: Why a runtime graph
+---
+
+# Why a runtime graph
+
+A [semantic graph](/concepts/why-semantic) models what the code *can* do: every
+`CALLS` edge is a call the source **could** make, every reference a dependency the
+type checker **could** resolve. That is exactly what you want for safety questions
+— *what might break if I change this?* — because it is exhaustive. What it cannot
+tell you is what actually happens when the program runs: which of those possible
+calls fire, how often, and where the time goes.
+
+The **runtime layer** answers that. It is the same graph, enriched with
+measurements from a real execution.
+
+## What a static graph cannot see
+
+A static model is, by construction, blind to behaviour that only exists at run
+time:
+
+- **Which path is hot.** Static `CALLS` edges are unweighted — a call in a tight
+  loop and a call made once at startup look identical. Optimization needs to know
+  which is which.
+- **Calls through dynamic dispatch.** A method reached through a computed property
+  (`obj[name]()`), a callback, or a framework that wires handlers by name has *no*
+  static `CALLS` edge — one of the documented
+  [blind spots](/static-analysis#what-the-analysis-cannot-see) of a static model.
+  At run time the call is right there on the stack.
+- **Where the time actually goes.** Structure says nothing about cost. The
+  function with the largest blast radius is not necessarily the one worth
+  optimising; the hot one is.
+
+## Reconstructed from a profile, not parsed
+
+The runtime layer is not parsed from source — it is reconstructed by
+[`enrich`](/commands/enrich) from a **V8 CPU profile**, the `.cpuprofile` any Node
+process emits under `node --cpu-prof`. No instrumentation, collector, or extra
+dependency is involved: you run the code the way you already run it (its entry
+point or, better, its test suite) and hand the resulting profile to `enrich`.
+
+It writes two things back onto the graph:
+
+- **`metadata.runtime` on nodes** — measured self time and sample counts for each
+  function the sampler caught on the stack, joined to the graph by a key that
+  survives transpilation (by function name, falling back to source range).
+- **`CALLS_RUNTIME` edges** — the profile's call tree mined into caller → callee
+  edges, each weighted by how much execution flowed through it. This is the call
+  graph *as it actually ran*.
+
+## The dynamic counterpart to `CALLS`
+
+`CALLS_RUNTIME` is to the runtime layer what `CALLS` is to the static one — with
+the gaps reversed. It records the calls made through the dynamic dispatch and
+callbacks static analysis misses, and it carries weight where static `CALLS` is
+unweighted. That weight is what lets [`cost`](/commands/cost) propagate measured
+self time into inclusive subtree cost, and what [`cluster`](/commands/cluster)
+fuses with the static graph to detect communities from how the code *runs*, not
+just how it is written. The runtime edges show up on
+[`neighbors`](/commands/neighbors) and in the web visualisation alongside the
+static ones.
+
+## Honest coverage, not total
+
+A sampling profiler attributes time to whatever is on the stack at each tick, so
+the runtime layer is **honest, not exhaustive** — the opposite trade-off from the
+static graph:
+
+- **Coverage is partial and labelled.** Module loading, the runtime itself, and
+  dependencies all consume samples that map to no in-project node; `enrich`
+  *reports* that gap rather than silently presenting a partial attribution.
+- **Inlining hides leaf functions.** V8 inlines small hot functions into their
+  caller, so a tiny helper in a tight loop may show no metrics while its caller
+  shows more than its own body costs. Corroborate a surprising hotspot against the
+  static `CALLS` graph.
+- **One source today.** The only telemetry source so far is the V8 CPU profile;
+  the ingester is shaped so latency, call-frequency, and cost sources can follow
+  without a schema change.
+
+## Designed for the agent
+
+Once the graph carries measured weight, the
+[`/code-graph-optimize`](/agent/slash-commands) agent can aim at the code that is
+genuinely hot rather than guessing from structure. But runtime numbers are
+**advisory**: a sampling median is noisy, so the agent treats a measured
+improvement as evidence, never proof, and never lets it override the hard
+[`verify`](/commands/verify) gate that type-checks and tests every edit. Static
+safety still decides whether a change is allowed; the runtime layer only decides
+where to look.
+
+## See also
+
+- [Why a semantic graph](/concepts/why-semantic) — the static layer this builds
+  on, and why symbol resolution makes it trustworthy.
+- [Graph layers](/concepts/graph-layers) — every layer of the graph and where each
+  one comes from.
+- [`enrich`](/commands/enrich) — produce a profile and attach the runtime layer.
+- [`cost`](/commands/cost) / [`cluster`](/commands/cluster) — the analyses the
+  runtime layer powers.
