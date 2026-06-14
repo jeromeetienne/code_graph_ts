@@ -187,7 +187,6 @@ body { display: flex; }
 	text-align: center;
 	text-transform: none;
 	user-select: none;
-	cursor: help;
 	opacity: 0.5;
 }
 .help-badge:hover,
