@@ -34,7 +34,11 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          # Node 24 (not 20): the demo extract loads the full CLI, which imports
+          # networkanalysis-ts — a CommonJS package that ships ESM re-export syntax.
+          # Node 20's cjs-module-lexer fails to detect its named exports; Node 24
+          # resolves them, matching the local dev environment.
+          node-version: 24
           cache: npm
           cache-dependency-path: |
             package-lock.json
