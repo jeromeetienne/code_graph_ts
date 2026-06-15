@@ -167,12 +167,15 @@ npx ts-knowledge-graph install --force    # overwrite previously installed copie
 
 ```
 src/
-  schema/        Zod schemas for nodes and edges (the wire format)
+  schema/                    Zod schemas for nodes, edges, and manifests (the wire format)
   extract/
     project_loader.ts        load a ts-morph Project from tsconfig
     node_id.ts               deterministic, position-stable node ids
     structural_extractor.ts  modules, declarations, imports, containment
     semantic_extractor.ts    heritage, CALLS, INSTANTIATES, type edges
+    config_extractor.ts      ConfigFlag nodes (process.env) + READS_CONFIG
+    api_extractor.ts         ExternalAPI nodes (fetch hosts) + CALLS_EXTERNAL
+    endpoint_extractor.ts    Endpoint nodes (routes) + HANDLES
     graph_builder.ts         orchestrates extraction, dedupes by id
   store/
     jsonl_store.ts           serialize the graph to JSONL
@@ -180,7 +183,26 @@ src/
     kuzu_store.ts            load the graph into embedded Kùzu, run Cypher
   query/
     graph_query.ts           the agent's query tools (who-calls, blast-radius…)
-  commands/                  one file per CLI command (extract, load, query, web, install)
+    campaign_planner.ts      rank safe removals + hotspots into a worklist (campaign)
+  enrich/                    runtime layer from a V8 CPU profile (the enrich command)
+    cpu_profile.ts           parse a V8 .cpuprofile
+    runtime_join.ts          join profile frames to nodes by enclosing range
+    runtime_enricher.ts      attach measured self-time / sample counts onto nodes
+  cluster/                   Leiden community detection (the cluster command)
+    cluster_weights.ts       per-edge-kind coupling weights
+    community_detector.ts    Leiden (CPM) over the weighted coupling graph
+    graph_clusterer.ts       orchestrate clustering, write metadata.community
+  benchmark/                 measured before/after runtime delta (the benchmark command)
+    node_benchmark.ts        the benchmark gate (profile → enrich → cost)
+    benchmark_stats.ts       median + spread, so noise is reported honestly
+  verify/
+    project_verifier.ts      run typecheck + tests as one keep/revert gate (verify)
+  report/                    CODEBASE_BRIEF generation (the report command)
+    report_data.ts           gather the report data from the graph
+    graph_report.ts          render markdown / json (and the visual HTML)
+    pdf_renderer.ts          optional HTML-to-PDF, degrades to HTML when absent
+  commands/                  one file per CLI command (extract, load, enrich, cluster,
+                             find, …, verify, benchmark, report, webview, install)
   cli.ts                     wires the commands into the ts-knowledge-graph CLI
 ```
 
