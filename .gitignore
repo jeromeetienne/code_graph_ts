@@ -16,4 +16,3 @@ dist/
 
 # Generated graph output (default output folder; legacy ./outputs)
 .ts_knowledge_graph/
-outputs/
