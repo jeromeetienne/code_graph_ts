@@ -6,6 +6,7 @@
 	"scripts": {
 		"dev": "next dev",
 		"build": "next build",
+		"postbuild": "pagefind --site out --output-subdir _pagefind",
 		"start": "npx serve out",
 		"typecheck": "tsc --noEmit"
 	},
@@ -20,6 +21,7 @@
 		"@types/node": "^25.5.0",
 		"@types/react": "^19.2.0",
 		"@types/react-dom": "^19.2.0",
+		"pagefind": "^1.5.2",
 		"typescript": "^6.0.2"
 	}
 }
