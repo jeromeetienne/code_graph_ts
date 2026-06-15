@@ -111,6 +111,20 @@ body { display: flex; }
 }
 .theme-toggle:hover { background: var(--surface-hover); }
 
+.repo-link {
+	flex: none;
+	width: 26px;
+	height: 26px;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	border-radius: 6px;
+	background: var(--surface-raised);
+	color: var(--text-on-control);
+	border: 1px solid var(--border-control);
+}
+.repo-link:hover { background: var(--surface-hover); }
+
 #sidebar .foldable {
 	display: flex;
 	align-items: center;
